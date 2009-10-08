@@ -716,9 +716,9 @@ use strict;
 use warnings;
 
 # lookup hashes
-our %package2class;
 our %package2classId;
 our %classId2package;
+our %classId2class;
 
 # This hash stores integer pointer address->perl SV association.  Used for
 # overriding virtual functions, where all you have as an input is a void* to
@@ -941,8 +941,8 @@ sub installautoload {
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
-        warn "called AUTOLOAD in '$where' for '$package'->$method\n";
-        warn "  (@_)\n";
+        # warn "called AUTOLOAD in '$where' for '$package'->$method\n";
+        # warn "  (@_)\n";
         return if($method eq 'DESTROY');
         if($package =~ s/^  //) {
             warn "I don't speak super";
@@ -950,7 +950,7 @@ sub installautoload {
         }
         if($package =~ s/^ //) {
             if(my $ref = $package->can($method)) {
-                warn "goto Perl $method";
+                # warn "goto Perl $method";
                 goto @$ref;
             }
         }
@@ -961,17 +961,30 @@ sub installautoload {
         }
         # XXX classId has to come from walking the @ISA depth-first
         # XXX and then package2class shouldn't exist
+        my $class_id = find_class_id($package);
         my ($id, $what) = getSmokeMethodId(@_,
-            $package2classId{$package},
-            $method,
-            $package2class{$package}
+            $class_id, $method, $classId2class{$class_id}
         );
-        warn "got $id $what";
+        # warn "got $id $what";
         unshift(@_, $id, $self ? $self : ());
         goto &call_smoke;
     });
 }
 
+# replace c++ package_classId() function
+sub find_class_id {
+    my ($package) = @_;
+
+    return $package2classId{$package}
+        if(exists $package2classId{$package});
+
+    my $isa = $A->($package . '::ISA');
+    foreach my $entry (@$isa) {
+        my @got = find_class_id($entry);
+        return($got[0]) if(@got);
+    }
+    return();
+}
 
 # Args: @_: the args to the method being called
 #       $classname: the c++ class being called
@@ -1000,7 +1013,7 @@ sub getSmokeMethodId {
             @mungedMethods = map { $_ . '$' } @mungedMethods;
         }
     }
-    warn "lookup $classname @mungedMethods";
+    # warn "lookup $classname @mungedMethods";
     my @methodIds = map { findMethod( $classname, $_ ) } @mungedMethods;
 
     my $cacheLookup = 1;
@@ -1184,12 +1197,12 @@ sub init_class {
     my ($cxxClassName) = @_;
 
     my $perlClassName = normalize_classname($cxxClassName);
-    $package2class{$perlClassName} = $cxxClassName;
     my $classId = idClass($cxxClassName);
 
     # Save the association between this perl package and the cxx classId.
     $package2classId{$perlClassName} = $classId;
     $classId2package{$classId} = $perlClassName;
+    $classId2class{$classId} = $cxxClassName;
 
     # Define the inheritance array for this class.
     my @isa = getIsa($classId);
