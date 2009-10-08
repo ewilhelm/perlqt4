@@ -941,18 +941,18 @@ sub installautoload {
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
-        # warn "called AUTOLOAD in '$where' for '$package'->$method\n";
-        # warn "  (@_)\n";
+        warn "called AUTOLOAD in '$where' for '$package'->$method\n";
+        warn "  (@_)\n";
         return if($method eq 'DESTROY');
         if($package =~ s/^  //) {
             warn "I don't speak super";
             return;
         }
         if($package =~ s/^ //) {
-            if(my $ref = $package->can($method)) {
-                # warn "goto Perl $method";
-                goto @$ref;
-            }
+        }
+        if(my $ref = "$package"->can($method)) {
+            warn "goto Perl $method";
+            goto &$ref;
         }
         package Qt::_internal;
         my $self;
@@ -969,6 +969,8 @@ sub installautoload {
         unshift(@_, $id, $self ? $self : ());
         goto &call_smoke;
     });
+    # XXX there's still a mess somewhere
+    $ISUB->("$where\::_UTOLOAD", \&{"$where\::AUTOLOAD"});
 }
 
 # replace c++ package_classId() function
@@ -1085,7 +1087,7 @@ sub getSmokeMethodId {
             $msg .= "Candidates are:\n\t";
             $msg .= join "\n\t", dumpCandidates( $classname, $methodname, \@methodIds );
             $msg .= "\nChoosing first one...\n";
-            warn $msg;
+            die $msg;
             @methodIds = $methodIds[0];
 
             # Since a call to this same method with different args may resolve
@@ -1236,8 +1238,8 @@ sub init_class {
         # QTextEdit::ExtraSelection, remove the first bit.
         $cxxClassName =~ s/.*://;
         $Qt::AutoLoad::AUTOLOAD = "$perlClassName\::$cxxClassName";
-        my $_utoload = \&{"$perlClassName\::_UTOLOAD"};
-        setThis( bless &$_utoload, " $perlClassName" );
+        my $autoload = \&{"$perlClassName\::AUTOLOAD"};
+        setThis( bless &$autoload, " $perlClassName" );
     }) unless(defined &{"$perlClassName\::NEW"});
 
     # Make the constructor subroutine

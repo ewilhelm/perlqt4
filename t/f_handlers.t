@@ -147,8 +147,11 @@ my $app = Qt::Application( \@ARGV );
 {
     # Test marshall_ValueListItem ToSV
     Qt::setSignature( 'QKeySequence::QKeySequence( int )' );
-    my $shortcut1 = Qt::KeySequence( Qt::Key_Enter() );
     my $shortcut2 = Qt::KeySequence( Qt::Key_Tab() );
+    # XXX this is unambiguous the first time?
+    warn "what ? ", Qt::Key_Enter(), ",", Qt::Key_Tab();
+    my $shortcut1 = Qt::KeySequence( Qt::Key_Enter() );
+
     my $shortcuts = [ $shortcut1, $shortcut2 ];
     my $action = Qt::Action( 'Foobar', undef );
 
