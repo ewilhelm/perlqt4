@@ -220,16 +220,17 @@ call_smoke(methodid, ...)
         int methodid
     CODE:
         
-        items--;
+        int wasitems = items;
+        --items;
         int withObject = 0;
         static smokeperl_object nothis = { 0, 0, 0, false };
         smokeperl_object* call_this = 0;
 
-
+        // see if the first argument was an object
         if ( SvOK(ST(1)) ) {
             if( (call_this = sv_obj_info( ST(1) )) ) {
               withObject = 1;
-              items--;
+              --items;
             }
             else {
                 call_this = &nothis;
@@ -239,22 +240,17 @@ call_smoke(methodid, ...)
             call_this = &nothis;
         }
 
-        fprintf(stderr, "withObject: %d\n", withObject);
-        fprintf(stderr, "items: %d\n", items);
-        fprintf(stderr, "with arguments (%s)\n", SvPV_nolen(sv_2mortal(catArguments(SP-items+1, items))));
+        // MethodCall tries to write into the stack, so we have to copy it
+        SV ** mystack = new SV*[items];
+        for(int i = 0; i < items; i++)
+          mystack[i] = sv_mortalcopy(ST(wasitems-items+i));
 
-        PerlQt::MethodCall call( qt_Smoke, methodid, call_this, SP-items+1, items);
-        fprintf(stderr, "called it\n");
-        fprintf(stderr, "called it\n");
+        PerlQt::MethodCall call( qt_Smoke, methodid, call_this, mystack, items);
         call.next();
-        fprintf(stderr, "nexted\n");
-
-        sp = mark;
-        SV* retval = call.var();
-        fprintf(stderr, "pushing\n");
-        XPUSHs(sv_2mortal(retval));
-        fprintf(stderr, "returning\n");
-        XSRETURN(1);
+        delete [] mystack;
+        RETVAL = call.var();
+    OUTPUT:
+        RETVAL
 
 SV*
 make_metaObject(parentClassId,parentMeta,stringdata_sv,data_sv)
