@@ -58,9 +58,6 @@ sub import {
     foreach my $sp ('  ', ' ', '') {
         my $where = $sp . $caller;
         Qt::_internal::installautoload($where);
-        package Qt::AutoLoad;
-        my $autosub = \&{$where . '::_UTOLOAD'};
-        $ISUB->($where.'::AUTOLOAD', sub { &$autosub });
     }
 
     Qt::_internal::installthis($caller);

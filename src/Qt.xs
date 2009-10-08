@@ -245,7 +245,7 @@ call_smoke(methodid, ...)
         for(int i = 0; i < items; i++)
           mystack[i] = sv_mortalcopy(ST(wasitems-items+i));
 
-        PerlQt::MethodCall call( qt_Smoke, methodid, call_this, mystack, items);
+        PerlQt::MethodCall call(qt_Smoke, methodid, call_this, mystack, items);
         call.next();
         delete [] mystack;
         RETVAL = call.var();

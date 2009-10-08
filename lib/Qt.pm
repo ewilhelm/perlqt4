@@ -24,6 +24,7 @@ sub new {
     # Give back the new value
     return $ret;
 }
+sub DESTROY {}
 
 # This subroutine is used to set the context for translation correctly for any
 # perl subclasses.  Without it, the context would always be set to the base Qt
@@ -36,7 +37,6 @@ sub tr {
     }
     return Qt::qApp()->translate( $context, @_ );
 }
-sub DESTROY {};
 
 package Qt::base::_overload;
 use strict;
@@ -715,8 +715,8 @@ package Qt::_internal;
 use strict;
 use warnings;
 
-# These 2 hashes provide lookups from a perl package name to a smoke
-# classid, and vice versa
+# lookup hashes
+our %package2class;
 our %package2classId;
 our %classId2package;
 
@@ -933,7 +933,43 @@ sub dumpCandidates {
 }
 
 sub installautoload {
-    #warn "this really doesn't do anything yet";
+    my ($where) = @_;
+
+    # warn "install autoload in '$where'\n";
+    package Qt::AutoLoad;
+    our $AUTOLOAD;
+    $ISUB->("$where\::AUTOLOAD", sub {
+        (my $method = $AUTOLOAD) =~ s/(.*):://;
+        my $package = $1;
+        warn "called AUTOLOAD in '$where' for '$package'->$method\n";
+        warn "  (@_)\n";
+        return if($method eq 'DESTROY');
+        if($package =~ s/^  //) {
+            warn "I don't speak super";
+            return;
+        }
+        if($package =~ s/^ //) {
+            if(my $ref = $package->can($method)) {
+                warn "goto Perl $method";
+                goto @$ref;
+            }
+        }
+        package Qt::_internal;
+        my $self;
+        if((ref($_[0])||'') eq $where) {
+            $self = shift(@_);
+        }
+        # XXX classId has to come from walking the @ISA depth-first
+        # XXX and then package2class shouldn't exist
+        my ($id, $what) = getSmokeMethodId(@_,
+            $package2classId{$package},
+            $method,
+            $package2class{$package}
+        );
+        warn "got $id $what";
+        unshift(@_, $id, $self ? $self : ());
+        goto &call_smoke;
+    });
 }
 
 
@@ -954,6 +990,7 @@ sub getSmokeMethodId {
     foreach my $arg ( @_ ) {
         if (!defined $arg) {
             # An undefined value requires a search for each type of argument
+            warn "not defined";
             @mungedMethods = map { $_ . '#', $_ . '?', $_ . '$' } @mungedMethods;
         } elsif(isObject($arg)) {
             @mungedMethods = map { $_ . '#' } @mungedMethods;
@@ -963,6 +1000,7 @@ sub getSmokeMethodId {
             @mungedMethods = map { $_ . '$' } @mungedMethods;
         }
     }
+    warn "lookup $classname @mungedMethods";
     my @methodIds = map { findMethod( $classname, $_ ) } @mungedMethods;
 
     my $cacheLookup = 1;
@@ -976,11 +1014,13 @@ sub getSmokeMethodId {
         if ( @altMethod == 1 ) {
             my $altMethod = $altMethod[0];
             foreach my $argId ( 0..$#_ ) {
+                warn "lookup $altMethod $argId";
                 my $wantType = getTypeNameOfArg( $altMethod, $argId );
                 $wantType =~ s/^const\s+//;
                 $wantType =~ s/(?<=\w)[&*]$//g;
                 $wantType = normalize_classname( $wantType );
                 no strict qw( refs );
+                warn "$wantType <-- ";
                 $_[$argId] = $wantType->( $_[$argId] );
                 use strict;
             }
@@ -1144,12 +1184,13 @@ sub init_class {
     my ($cxxClassName) = @_;
 
     my $perlClassName = normalize_classname($cxxClassName);
+    $package2class{$perlClassName} = $cxxClassName;
     my $classId = idClass($cxxClassName);
 
     # Save the association between this perl package and the cxx classId.
     $package2classId{$perlClassName} = $classId;
     $classId2package{$classId} = $perlClassName;
-return;
+
     # Define the inheritance array for this class.
     my @isa = getIsa($classId);
     @isa = $customClasses{$perlClassName}
@@ -1172,11 +1213,6 @@ return;
     foreach my $sp ('', ' ') {
         my $where = $sp . $perlClassName;
         installautoload($where);
-        # Putting this in one package gives XS_AUTOLOAD one spot to look for
-        # the autoload variable
-        package Qt::AutoLoad;
-        my $autosub = \&{$where . '::_UTOLOAD'};
-        $ISUB->($where.'::AUTOLOAD', sub {&$autosub});
     }
 
     $ISUB->("$perlClassName\::NEW", sub {
