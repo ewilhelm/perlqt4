@@ -119,6 +119,7 @@ public:
             return;
         _called = true;
 
+        fprintf(stderr, "in callMethod() here\n");
         Smoke::Method *method = _smoke->methods + _method;
         Smoke::ClassFn fn = _smoke->classes[method->classId].classFn;
 

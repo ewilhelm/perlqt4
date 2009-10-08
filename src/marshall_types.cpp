@@ -371,6 +371,7 @@ namespace PerlQt {
     void MethodCallBase::next() {
         int oldcur = _cur;
         _cur++;
+        fprintf(stderr, "a\n");
         while( !_called && _cur < items() ) {
             Marshall::HandlerFn fn = getMarshallFn(type());
 
@@ -379,11 +380,16 @@ namespace PerlQt {
             // MethodCallBase::next -> TypeHandler fn -> recurse back to next()
             // until all variables are marshalled -> callMethod -> TypeHandler
             // fn to clean up any variables they create
+            fprintf(stderr, "aa\n");
             (*fn)(this);
+            fprintf(stderr, "b\n");
             _cur++;
+            fprintf(stderr, "c\n");
         }
 
+        fprintf(stderr, "d\n");
         callMethod();
+        fprintf(stderr, "e\n");
         _cur = oldcur;
     }
 
@@ -439,6 +445,7 @@ namespace PerlQt {
         // This is the stack pointer we'll pass to the perl call
         dSP;
         // This defines how many arguments we're sending to the perl sub
+        fprintf(stderr, "in CallMethod() now\n");
         SP = _sp + items() - 1;
         PUTBACK;
         // Call the perl sub

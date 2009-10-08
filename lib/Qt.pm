@@ -36,6 +36,7 @@ sub tr {
     }
     return Qt::qApp()->translate( $context, @_ );
 }
+sub DESTROY {};
 
 package Qt::base::_overload;
 use strict;
@@ -931,6 +932,10 @@ sub dumpCandidates {
     return @methods;
 }
 
+sub installautoload {
+    #warn "this really doesn't do anything yet";
+}
+
 
 # Args: @_: the args to the method being called
 #       $classname: the c++ class being called
@@ -1144,7 +1149,7 @@ sub init_class {
     # Save the association between this perl package and the cxx classId.
     $package2classId{$perlClassName} = $classId;
     $classId2package{$classId} = $perlClassName;
-
+return;
     # Define the inheritance array for this class.
     my @isa = getIsa($classId);
     @isa = $customClasses{$perlClassName}

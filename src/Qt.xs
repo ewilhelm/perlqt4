@@ -184,20 +184,6 @@ classFromId( classId )
     OUTPUT:
         RETVAL
 
-#// Args: char* package: the name of a Perl package
-#// Returns: none
-#// Desc: Makes calls to undefined subroutines for the given package redirect
-#//       to call XS_AUTOLOAD
-void
-installautoload( package )
-        char* package
-    CODE:
-        if(!package) XSRETURN_EMPTY;
-        char* autoload = new char[strlen(package) + 11];
-        sprintf(autoload, "%s::_UTOLOAD", package);
-        newXS(autoload, XS_AUTOLOAD, __FILE__);
-        delete[] autoload;
-
 void
 installqt_metacall(package)
         char *package
@@ -228,6 +214,47 @@ installthis( package )
         CV *attrsub = newXS(attr, XS_this, __FILE__);
         sv_setpv((SV*)attrsub, ""); // sub this () : lvalue; perldoc perlsub
         delete[] attr;
+
+SV*
+call_smoke(methodid, ...)
+        int methodid
+    CODE:
+        
+        items--;
+        int withObject = 0;
+        static smokeperl_object nothis = { 0, 0, 0, false };
+        smokeperl_object* call_this = 0;
+
+
+        if ( SvOK(ST(1)) ) {
+            if( (call_this = sv_obj_info( ST(1) )) ) {
+              withObject = 1;
+              items--;
+            }
+            else {
+                call_this = &nothis;
+            }
+        }
+        else {
+            call_this = &nothis;
+        }
+
+        fprintf(stderr, "withObject: %d\n", withObject);
+        fprintf(stderr, "items: %d\n", items);
+        fprintf(stderr, "with arguments (%s)\n", SvPV_nolen(sv_2mortal(catArguments(SP-items+1, items))));
+
+        PerlQt::MethodCall call( qt_Smoke, methodid, call_this, SP-items+1, items);
+        fprintf(stderr, "called it\n");
+        fprintf(stderr, "called it\n");
+        call.next();
+        fprintf(stderr, "nexted\n");
+
+        sp = mark;
+        SV* retval = call.var();
+        fprintf(stderr, "pushing\n");
+        XPUSHs(sv_2mortal(retval));
+        fprintf(stderr, "returning\n");
+        XSRETURN(1);
 
 SV*
 make_metaObject(parentClassId,parentMeta,stringdata_sv,data_sv)
