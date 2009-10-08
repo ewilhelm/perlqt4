@@ -932,26 +932,28 @@ sub dumpCandidates {
     return @methods;
 }
 
+
 sub installautoload {
     my ($where) = @_;
 
     # warn "install autoload in '$where'\n";
     package Qt::AutoLoad;
+use constant debug => $ENV{DEBUG};
     our $AUTOLOAD;
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
-        warn "called AUTOLOAD in '$where' for '$package'->$method\n";
-        warn "  (@_)\n";
+        debug and warn "called AUTOLOAD in '$where' for '$package'->$method\n";
+        debug and warn "  (@_)\n";
         return if($method eq 'DESTROY');
         if($package =~ s/^  //) {
-            warn "I don't speak super";
-            return;
+            # debug and warn "I don't speak super";
+            $package .= '::SUPER';
         }
         if($package =~ s/^ //) {
         }
         if(my $ref = "$package"->can($method)) {
-            warn "goto Perl $method";
+            debug and warn "goto Perl $method";
             goto &$ref;
         }
         package Qt::_internal;
