@@ -957,18 +957,16 @@ use constant debug => $ENV{DEBUG};
             goto &$ref;
         }
         package Qt::_internal;
-        my $self;
-        if((ref($_[0])||'') eq $where) {
-            $self = shift(@_);
-        }
-        # XXX classId has to come from walking the @ISA depth-first
-        # XXX and then package2class shouldn't exist
+
+        # if the object is of this class, treat as an object method
+        my $self = ((ref($_[0])||'') eq $where) ? shift(@_) : undef;
+
         my $class_id = find_class_id($package);
         my ($id, $what) = getSmokeMethodId(@_,
             $class_id, $method, $classId2class{$class_id}
         );
         # warn "got $id $what";
-        unshift(@_, $id, $self ? $self : ());
+        unshift(@_, $id, $self);
         goto &call_smoke;
     });
     # XXX there's still a mess somewhere

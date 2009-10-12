@@ -211,30 +211,27 @@ installthis( package )
         strcpy(attr, package);
         strcat(attr, "::this");
         // *{ $name } = sub () : lvalue;
+        fprintf(stderr, "installthis %s\n", package);
         CV *attrsub = newXS(attr, XS_this, __FILE__);
         sv_setpv((SV*)attrsub, ""); // sub this () : lvalue; perldoc perlsub
         delete[] attr;
 
 SV*
-call_smoke(methodid, ...)
+call_smoke(methodid, object, ...)
         int methodid
+        SV* object
     CODE:
         
         int wasitems = items;
-        --items;
-        int withObject = 0;
+        items -= 2;
+
         static smokeperl_object nothis = { 0, 0, 0, false };
         smokeperl_object* call_this = 0;
 
-        // see if the first argument was an object
-        if ( SvOK(ST(1)) ) {
-            if( (call_this = sv_obj_info( ST(1) )) ) {
-              withObject = 1;
-              --items;
-            }
-            else {
+        // see if the first argument was an object or undef
+        if ( SvOK(object) ) {
+            if( ! (call_this = sv_obj_info( object )) )
                 call_this = &nothis;
-            }
         }
         else {
             call_this = &nothis;
