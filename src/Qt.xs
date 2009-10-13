@@ -74,6 +74,40 @@ findMethod( classname, methodname )
             }
         }
 
+SV*
+get_methods_for(classname)
+        char* classname
+    CODE:
+        HV *hv = newHV();
+        Smoke::Method * m = qt_Smoke->methods;
+        for(int i = 0; i < qt_Smoke->numMethods; i++) {
+          if(0 != qstrcmp(classname,
+            qt_Smoke->classes[m[i].classId].className))
+              continue;
+
+          const char * method = qt_Smoke->methodNames[m[i].name];
+          I32 methodl = strlen(method);
+
+          AV *id_list;
+
+          if(SV **get = hv_fetch(hv, method, methodl, 0)) {
+            if(get && SvOK(*get)) {
+              id_list = (AV*) SvRV(*get);
+            }
+            else {
+              croak("XS failure");
+            }
+          }
+          else {
+            id_list = newAV();
+	        hv_store(hv, method, methodl, newRV_noinc((SV*) id_list), 0);
+          }
+          av_push(id_list, newSViv(i));
+        }
+        RETVAL = newRV_noinc((SV*)hv);
+    OUTPUT:
+        RETVAL
+
 #// Args: none
 #// Returns: an array of all classes that qt_Smoke knows about
 SV*
