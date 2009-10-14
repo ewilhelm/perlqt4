@@ -1563,6 +1563,9 @@ XS(XS_signal){
     dXSARGS;
 
     smokeperl_object *o = sv_obj_info(sv_this);
+
+    if(!o) croak("failed to get global variable duh");
+    // segfault
     QObject *qobj = (QObject*)o->smoke->cast( o->ptr, o->classId, o->smoke->idClass("QObject").index );
     if(qobj->signalsBlocked()) XSRETURN_UNDEF;
 
