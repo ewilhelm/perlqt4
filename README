@@ -1,0 +1,6 @@
+This is not the code you're looking for.  Or maybe it is.
+
+This repository is a radical fork from the PerlQt3 way of doing things,
+with the goal of removing the this() method, global variables, odd
+subclassing, AUTOLOAD()s, and segmentation faults.  The upstream qt4
+project has (thus far) followed the architecture of Qt3.
