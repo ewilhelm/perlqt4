@@ -275,6 +275,10 @@ call_smoke(methodid, object, ...)
         for(int i = 0; i < items; i++)
           mystack[i] = sv_mortalcopy(ST(wasitems-items+i));
 
+        if(!qt_Smoke->methods[methodid].flags & Smoke::mf_static) {
+          if(!call_this->smoke) croak("not a static function");
+        }
+
         fprintf(stderr, "calling %d\n", methodid);
         PerlQt::MethodCall call(qt_Smoke, methodid, call_this, mystack, items);
         fprintf(stderr, "constructed\n");
