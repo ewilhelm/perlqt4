@@ -43,6 +43,8 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 }
 
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
+    // XXX this should only try to call perl methods if they were not
+    // installed by the binding
     return false;
     // If the Qt process forked, we want to make sure we can see the
     // interpreter
