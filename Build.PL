@@ -34,7 +34,7 @@ GetOptions(
     '--with-qt-dir:s' => \$userQtDir,
     '--with-qt-inc-dir:s' => \$userQtIncDir,
     '--with-qt-lib-dir:s' => \$userQtLibDir,
-    '--build-debug' => sub {push(@flags, '-DDEBUG')},
+    '--with-debug' => sub {push(@flags, '-DDEBUG')},
 );
 
 if( $userSmokeDir ) {

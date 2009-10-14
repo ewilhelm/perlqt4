@@ -45,7 +45,7 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
     // If the Qt process forked, we want to make sure we can see the
     // interpreter
-    PERL_SET_CONTEXT(PL_curinterp);
+    // PERL_SET_CONTEXT(PL_curinterp);
 #ifdef DEBUG
     if( do_debug && (do_debug & qtdb_virtual) && (do_debug & qtdb_verbose)){
         Smoke::Method methodobj = qt_Smoke->methods[method];
@@ -55,6 +55,9 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
 #endif
     // Look for a perl sv associated with this pointer
     SV *obj = getPointerObject(ptr);
+    if(obj) {
+      fprintf(stderr, "got a pointerObject\n");
+    }
     smokeperl_object *o = sv_obj_info(obj);
 
     // Didn't find one
@@ -68,8 +71,6 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
 
     // Now find the stash for this perl object
     HV *stash = SvSTASH(SvRV(obj));
-    if(*HvNAME(stash) == ' ') // if withObject, look for a diff stash
-        stash = gv_stashpv(HvNAME(stash) + 1, TRUE);
 
     // Get the name of the method being called
     const char *methodname = smoke->methodNames[smoke->methods[method].name];
@@ -91,6 +92,7 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
 // Args: Smoke::Index classId: the smoke classId to get the perl package name for
 // Returns: char* containing the perl package name
 char* Binding::className(Smoke::Index classId) {
+    // XXX I suspect that this is not needed.
     // Find the classId->package hash
     HV* classId2package = get_hv( "Qt::_internal::classId2package", FALSE );
     if( !classId2package ) croak( "Internal error: Unable to find classId2package hash" );
@@ -108,8 +110,7 @@ char* Binding::className(Smoke::Index classId) {
                classId );
     }
 
-    SV* retval = sv_2mortal(newSVpvf(" %s", SvPV_nolen(*packagename)));
-    return SvPV_nolen(retval);
+    return SvPV_nolen(*packagename);
 }
 
 } // End namespace PerlQt

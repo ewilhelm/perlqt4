@@ -3,7 +3,7 @@ package MyApp;
 use Test::More tests => 4;
 
 use Qt;
-use Qt::isa qw(Qt::Application);
+use parent qw(Qt::Application);
 use Qt::slots
         foo => [],
         slotToSignal => ['int','int'],
@@ -12,20 +12,20 @@ use Qt::signals
         signal => ['int','int'],
         signalFromSlot => ['int','int'];
 
-sub NEW {
-    shift->SUPER::NEW(@_);
+sub new {
+    my $self = shift->SUPER::new(@_);
 
     # 1) testing correct subclassing of Qt::Application and this pointer
-    is( ref(this), ' MyApp', 'Correct subclassing' );
+    is( ref($self), ' MyApp', 'Correct subclassing' );
 
-    this->connect(this, SIGNAL 'signal(int,int)', SLOT 'slotToSignal(int,int)');
-    this->connect(this, SIGNAL 'signalFromSlot(int,int)', SLOT 'slot(int,int)');
+    $self->connect($self, SIGNAL 'signal(int,int)', SLOT 'slotToSignal(int,int)');
+    $self->connect($self, SIGNAL 'signalFromSlot(int,int)', SLOT 'slot(int,int)');
 
     # 4) automatic quitting will test Qt sig to custom slot 
-    this->connect(this, SIGNAL 'aboutToQuit()', SLOT 'foo()');
+    $self->connect($self, SIGNAL 'aboutToQuit()', SLOT 'foo()');
 
     # 2) Emit a signal to a slot that will emit another signal
-    emit signal( 5, 4 );
+    signal( 5, 4 );
 }
 
 sub foo {
@@ -47,9 +47,8 @@ sub slot {
 package main;
 
 use Qt;
-use MyApp;
 
-$a = MyApp(\@ARGV);
+$a = MyApp->new(\@ARGV);
 
 Qt::Timer::singleShot( 300, $a, SLOT "quit()" );
 

@@ -379,6 +379,7 @@ void marshall_basetype(Marshall* m) {
 
                     // Bless a HV ref into that package name, and shove o into
                     // var
+                    fprintf(stderr, "sending '%s'\n", classname);
                     var = sv_2mortal(set_obj_info( classname, o ) );
 
                     // Store this into the ptr map for reference from virtual
@@ -579,7 +580,7 @@ void marshall_QDBusVariant(Marshall *m) {
                 SmokeType( m->smoke(), m->smoke()->idType("QVariant") )
             );
 
-            sv_bless( obj, gv_stashpv( " Qt::DBusVariant", TRUE ) );
+            sv_bless( obj, gv_stashpv( "Qt::DBusVariant", TRUE ) );
             if (do_debug & qtdb_calls) {
                 smokeperl_object *o = sv_obj_info( obj );
                 printf("Allocating %s %p -> %p\n", "Qt::DBusVariant", o->ptr, (void*)obj);

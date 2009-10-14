@@ -1,23 +1,22 @@
+use warnings;
+use strict;
+
 use Test::More tests => 3;
 
 use Qt;
 
-$a=0;
+my $app;
 
-# Test if the Qt::Application ctor works
+eval { $app = Qt::Application->new(\@ARGV) };
+ok( !+$@, 'Qt::Application constructor' ) or BAIL_OUT($@);
 
-eval { $a = Qt::Application( \@ARGV ) };
-
-ok( !+$@, 'Qt::Application ctor' );
-
-# Test wether the global qApp object is properly set up
+is(ref $app, 'Qt::Application', 'blessed correctly');
 
 eval { qApp->libraryPaths() };
+ok( !+$@, 'qApp properly set up' ) or BAIL_OUT($@);
 
-ok( !+$@, 'qApp properly set up' ) or diag( $@ );
-
-# One second test of the event loop
-
+warn "now singleShot()";
 Qt::Timer::singleShot( 300, qApp, SLOT 'quit()' );
+warn "what?";
 
 ok( !qApp->exec, 'One second event loop' );

@@ -45,7 +45,6 @@ PerlQt::Binding binding;
 
 // Global variables
 SV* sv_this = 0;
-SV* sv_qapp = 0;
 HV* pointer_map = 0;
 int do_debug = 0;
 
@@ -466,6 +465,7 @@ SV* prettyPrintMethod(Smoke::Index id) {
 #endif
 
 const char* resolve_classname( smokeperl_object* o ) {
+  fprintf(stderr, "I'm resolving '%s'\n", o->smoke->classes[o->classId].className);
 	if (o->smoke->isDerivedFromByName(o->smoke->classes[o->classId].className, "QEvent")) {
 		QEvent * qevent = (QEvent *) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QEvent").index);
 		switch (qevent->type()) {
@@ -743,6 +743,7 @@ const char* resolve_classname( smokeperl_object* o ) {
 		}
 	}
 
+    fprintf(stderr, "and returning '%s'\n", binding.className( o->classId ));
     return binding.className( o->classId );
 }
 
@@ -753,6 +754,7 @@ SV* set_obj_info(const char * className, smokeperl_object * o) {
     SV* var = newRV_noinc((SV*)hv);
 
     // Bless the sv to that package.
+    fprintf(stderr, "bless into '%s'\n", className);
     sv_bless( var, gv_stashpv(className, TRUE) );
 
     // For this, we need a magic wand.  This is what actually

@@ -21,7 +21,6 @@ extern "C" {
 extern PerlQt::Binding binding;
 extern Q_DECL_EXPORT Smoke* qt_Smoke;
 extern Q_DECL_EXPORT void init_qt_Smoke();
-extern SV* sv_qapp;
 
 MODULE = Qt                PACKAGE = Qt::_internal
 
@@ -276,8 +275,11 @@ call_smoke(methodid, object, ...)
         for(int i = 0; i < items; i++)
           mystack[i] = sv_mortalcopy(ST(wasitems-items+i));
 
+        fprintf(stderr, "calling %d\n", methodid);
         PerlQt::MethodCall call(qt_Smoke, methodid, call_this, mystack, items);
+        fprintf(stderr, "constructed\n");
         call.next();
+        fprintf(stderr, "called it\n");
         delete [] mystack;
         RETVAL = call.var();
     OUTPUT:
@@ -375,13 +377,6 @@ setDebug(channel)
         do_debug = channel;
 
 void
-setQApp( qapp )
-        SV* qapp
-    CODE:
-        if( SvROK( qapp ) )
-            sv_setsv_mg( sv_qapp, qapp );
-
-void
 setThis(obj)
         SV* obj
     CODE:
@@ -399,16 +394,6 @@ SV*
 this()
     CODE:
         RETVAL = newSVsv(sv_this);
-    OUTPUT:
-        RETVAL
-
-SV*
-qApp()
-    CODE:
-        if (!sv_qapp)
-            RETVAL = &PL_sv_undef;
-        else
-            RETVAL = newSVsv(sv_qapp);
     OUTPUT:
         RETVAL
 
@@ -450,4 +435,3 @@ BOOT:
     newXS(" Qt::ModelIndex::internalPointer", XS_qmodelindex_internalpointer, __FILE__);
 
     sv_this = newSV(0);
-    sv_qapp = newSV(0);
