@@ -345,6 +345,8 @@ namespace PerlQt {
     MethodCallBase::MethodCallBase(Smoke *smoke, Smoke::Index meth) :
         _smoke(smoke), _method(meth), _cur(-1), _called(false), _sp(0)  
     {  
+        fprintf(stderr, "construct MethodCallBase for %s\n",
+          _smoke->methodNames[method().name]); 
     }
 
     MethodCallBase::MethodCallBase(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack) :
@@ -402,6 +404,8 @@ namespace PerlQt {
 
     VirtualMethodCall::VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, SV *obj, GV *gv) :
       MethodCallBase(smoke,meth,stack), _gv(gv){
+        fprintf(stderr, "construct VirtualMethodCall for %s\n",
+          _smoke->methodNames[method().name]); 
         dSP;
         ENTER;
         SAVETMPS;

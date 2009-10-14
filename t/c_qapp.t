@@ -1,7 +1,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use Qt;
 
@@ -19,4 +19,6 @@ warn "now singleShot()";
 Qt::Timer::singleShot( 300, qApp, SLOT 'quit()' );
 warn "what?";
 
-ok( !qApp->exec, 'One second event loop' );
+alarm(2);
+ok( !qApp->exec, 'Timer leaves event loop' );
+alarm(0);

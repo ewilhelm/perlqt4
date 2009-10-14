@@ -1476,6 +1476,7 @@ XS(XS_qt_metacall){
     PERL_UNUSED_VAR(items);
     PERL_SET_CONTEXT(PL_curinterp);
 
+            fprintf(stderr, "metacall\n");
     // Get my arguments off the stack
     QObject* sv_this_ptr = (QObject*)sv_obj_info(sv_this)->ptr;
     // This is an enum value, so it's stored as a scalar reference.
@@ -1547,6 +1548,7 @@ XS(XS_qt_metacall){
             }
             name.replace(*rx, "");
 
+            fprintf(stderr, "InvokeSlot\n");
             PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
             slot.next();
         }

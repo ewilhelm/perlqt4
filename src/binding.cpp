@@ -43,6 +43,7 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 }
 
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
+    return false;
     // If the Qt process forked, we want to make sure we can see the
     // interpreter
     // PERL_SET_CONTEXT(PL_curinterp);
