@@ -401,11 +401,10 @@ sub install_autoload {
             my $name = $k eq $cxx ? 'new' : ($ops{$k} || $k);
             my $id_list = join(',', @{$h->{$k}});
 
-            # get the classname out
-            my $bit = $name eq 'new' ? 'my $p = shift;'."\n" : '';
+            $k = '+'.$k if($k eq $cxx); # XXX silly workaround
 
             $name = '__'.$name if(defined &{"$where\::$name"});
-            $code .= "sub $name {$bit
+            $code .= "sub $name {
                 unshift(\@_, '$where', '$k', [$id_list]); " .
                 "goto &Qt::_internal::go}\n";
         }
@@ -473,9 +472,14 @@ sub go {
     my $id_list = shift;
 
     # if the object is of this class, treat as an object method
-    my $self = eval{$_[0]->isa($class)} ? shift(@_) : undef;
+    my $self = (ref($_[0]) and eval{$_[0]->isa($class)}) ?
+        shift(@_) : undef;
 
-    my $id = @$id_list > 1 ? resolver($class, $method, @_) : $id_list->[0];
+    $self = shift(@_) if($method =~ s/^\+//); # XXX silly workaround
+
+    # TODO check a single id's signature though
+    my $id = @$id_list > 1 ?
+        resolver($class, $method, @_) : $id_list->[0];
 
     unshift(@_, $id, $self);
     warn "call $class\::$method() as ",
@@ -1002,9 +1006,7 @@ sub Qt::Application::new {
     my ($class, $argv) = @_;
 
     my @args = ($0, @$argv);
-    warn "newing";
-    my $retval = Qt::Application->__new(scalar(@args), \@args);
-    warn "setQApp what?";
+    my $retval = $class->__new(scalar(@args), \@args);
     Qt::setQApp($retval);
     return($retval);
 }

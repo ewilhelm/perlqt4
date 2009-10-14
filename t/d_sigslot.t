@@ -1,3 +1,6 @@
+use warnings;
+use strict;
+
 package MyApp;
 
 use Test::More tests => 4;
@@ -16,7 +19,7 @@ sub new {
     my $self = shift->SUPER::new(@_);
 
     # 1) testing correct subclassing of Qt::Application and this pointer
-    is( ref($self), ' MyApp', 'Correct subclassing' );
+    is( ref($self), 'MyApp', 'Correct subclassing' ) or BAIL_OUT("stop there");
 
     $self->connect($self, SIGNAL 'signal(int,int)', SLOT 'slotToSignal(int,int)');
     $self->connect($self, SIGNAL 'signalFromSlot(int,int)', SLOT 'slot(int,int)');

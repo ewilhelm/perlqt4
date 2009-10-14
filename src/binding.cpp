@@ -45,7 +45,6 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
     // XXX this should only try to call perl methods if they were not
     // installed by the binding
-    return false;
     // If the Qt process forked, we want to make sure we can see the
     // interpreter
     // PERL_SET_CONTEXT(PL_curinterp);
@@ -56,6 +55,7 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
             ptr, qt_Smoke->classes[methodobj.classId].className, qt_Smoke->methodNames[methodobj.name] );
     }
 #endif
+    return false;
     // Look for a perl sv associated with this pointer
     SV *obj = getPointerObject(ptr);
     if(obj) {

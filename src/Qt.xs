@@ -255,6 +255,7 @@ call_smoke(methodid, object, ...)
         SV* object
     CODE:
         
+        PERL_SET_CONTEXT(PL_curinterp);
         int wasitems = items;
         items -= 2;
 
@@ -286,6 +287,11 @@ call_smoke(methodid, object, ...)
         fprintf(stderr, "called it\n");
         delete [] mystack;
         RETVAL = call.var();
+        if(qt_Smoke->methods[methodid].flags & Smoke::mf_ctor) {
+          fprintf(stderr, "should bless this\n");
+          char * packagename = SvPV_nolen(object);
+          sv_bless( RETVAL, gv_stashpv(packagename, TRUE) );
+        }
     OUTPUT:
         RETVAL
 
