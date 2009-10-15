@@ -12,7 +12,7 @@ use Qt::slots
         slotToSignal => ['int','int'],
         slot => ['int','int'];
 use Qt::signals
-        signal => ['int','int'],
+        signal1 => ['int','int'],
         signalFromSlot => ['int','int'];
 
 sub new {
@@ -21,14 +21,15 @@ sub new {
     # 1) testing correct subclassing of Qt::Application and this pointer
     is( ref($self), 'MyApp', 'Correct subclassing' ) or BAIL_OUT("stop there");
 
-    $self->connect($self, SIGNAL 'signal(int,int)', SLOT 'slotToSignal(int,int)');
+    $self->connect($self, SIGNAL 'signal1(int,int)', SLOT 'slotToSignal(int,int)');
     $self->connect($self, SIGNAL 'signalFromSlot(int,int)', SLOT 'slot(int,int)');
 
     # 4) automatic quitting will test Qt sig to custom slot 
     $self->connect($self, SIGNAL 'aboutToQuit()', SLOT 'foo()');
 
     # 2) Emit a signal to a slot that will emit another signal
-    signal( 5, 4 );
+    signal1( 5, 4 );
+    return($self);
 }
 
 sub foo {
@@ -51,8 +52,8 @@ package main;
 
 use Qt;
 
-$a = MyApp->new(\@ARGV);
+my $app = MyApp->new(\@ARGV);
 
-Qt::Timer::singleShot( 300, $a, SLOT "quit()" );
+Qt::Timer::singleShot( 300, $app, SLOT "quit()" );
 
-exit $a->exec;
+exit $app->exec;
