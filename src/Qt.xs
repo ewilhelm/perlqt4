@@ -235,20 +235,6 @@ installsignal(signalname)
         if(!signalname) XSRETURN_EMPTY;
         newXS(signalname, XS_signal, __FILE__);
 
-void
-installthis( package )
-        char* package
-    CODE:
-        if( !package ) XSRETURN_EMPTY;
-        char* attr = new char[strlen(package) + 7];
-        strcpy(attr, package);
-        strcat(attr, "::this");
-        // *{ $name } = sub () : lvalue;
-        fprintf(stderr, "installthis %s\n", package);
-        CV *attrsub = newXS(attr, XS_this, __FILE__);
-        sv_setpv((SV*)attrsub, ""); // sub this () : lvalue; perldoc perlsub
-        delete[] attr;
-
 SV*
 call_smoke(methodid, object, ...)
         int methodid
@@ -386,12 +372,6 @@ setDebug(channel)
     CODE:
         do_debug = channel;
 
-void
-setThis(obj)
-        SV* obj
-    CODE:
-        sv_setsv_mg( sv_this, obj );
-
 void*
 sv_to_ptr(sv)
     SV* sv
@@ -399,13 +379,6 @@ sv_to_ptr(sv)
 MODULE = Qt                PACKAGE = Qt                
 
 PROTOTYPES: ENABLE
-
-SV*
-this()
-    CODE:
-        RETVAL = newSVsv(sv_this);
-    OUTPUT:
-        RETVAL
 
 BOOT:
     /* same as -DUSE_SAFE_PUTENV in compile. prevents a "free from wrong
@@ -443,5 +416,3 @@ BOOT:
     newXS(" Qt::AbstractItemModel::removeColumns", XS_qabstract_item_model_removecolumns, __FILE__);
     newXS("Qt::AbstractItemModel::createIndex", XS_qabstractitemmodel_createindex, __FILE__);
     newXS(" Qt::ModelIndex::internalPointer", XS_qmodelindex_internalpointer, __FILE__);
-
-    sv_this = newSV(0);

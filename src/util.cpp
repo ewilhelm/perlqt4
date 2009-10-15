@@ -43,8 +43,7 @@ extern Q_DECL_EXPORT void init_qt_Smoke();
 // We only have one binding.
 PerlQt::Binding binding;
 
-// Global variables
-SV* sv_this = 0;
+// Global variables are bad
 HV* pointer_map = 0;
 int do_debug = 0;
 
@@ -845,8 +844,9 @@ XS(XS_qobject_qt_metacast) {
     dXSARGS;
     SV* mythis=0;
     SV* klass=0;
+    croak("what is this supposed to do now?");
     if( items == 1 ) {
-        mythis = sv_this;
+        // mythis = sv_this;
         klass = ST(0);
     }
     else if ( items == 2 ) {
@@ -898,6 +898,7 @@ XS(XS_qobject_qt_metacast) {
 */
 XS(XS_find_qobject_children) {
     dXSARGS;
+    croak("why?");
     if (items > 2 && items < 1) {
         croak("Qt::Object::findChildren takes 1 or 2 arguments, got %d", items);
         XSRETURN_UNDEF;
@@ -935,7 +936,8 @@ XS(XS_find_qobject_children) {
         croak("Call to get metaObject failed.");
     const QMetaObject* metaobject = (QMetaObject*)metao->ptr;
     AV* list = newAV();
-    pl_qFindChildren_helper(sv_this, objectName, re, *metaobject, list);
+    croak("there's no sv_this anymore");
+    // pl_qFindChildren_helper(sv_this, objectName, re, *metaobject, list);
     SV* result = newRV_noinc((SV*)list);
     ST(0) = result;
     XSRETURN(1);
@@ -1162,8 +1164,9 @@ XS(XS_qabstract_item_model_removecolumns) {
 //qabstractitemmodel_createindex(int argc, VALUE * argv, VALUE self)
 XS(XS_qabstractitemmodel_createindex) {
     dXSARGS;
+    croak("why do we need global variables everywhere?");
     if (items == 2 || items == 3) {
-        smokeperl_object* o = sv_obj_info(sv_this);
+        smokeperl_object* o = 0; // sv_obj_info(sv_this);
         if (!o)
             croak( "%s", "Qt::AbstractItemModel::createIndex must be called as a method on a Qt::AbstractItemModel object, eg. $model->createIndex" );
         Smoke::ModuleIndex nameId = o->smoke->idMethodName("createIndex$$$");
@@ -1476,16 +1479,16 @@ XS(XS_qt_metacall){
     PERL_UNUSED_VAR(items);
     PERL_SET_CONTEXT(PL_curinterp);
 
-            fprintf(stderr, "metacall\n");
+    croak("you can't have sv_this here");
     // Get my arguments off the stack
-    QObject* sv_this_ptr = (QObject*)sv_obj_info(sv_this)->ptr;
+    QObject* sv_this_ptr = 0; // (QObject*)sv_obj_info(sv_this)->ptr;
     // This is an enum value, so it's stored as a scalar reference.
     QMetaObject::Call _c = (QMetaObject::Call)SvIV(SvRV(ST(0)));
     int _id = (int)SvIV(ST(1));
     void** _a = (void**)sv_obj_info(ST(2))->ptr;
 
     // Assume the target slot is a C++ one
-    smokeperl_object* o = sv_obj_info(sv_this);
+    smokeperl_object* o = 0; // sv_obj_info(sv_this);
     Smoke::ModuleIndex nameId = o->smoke->idMethodName("qt_metacall$$?");
     Smoke::ModuleIndex classIdx = { o->smoke, o->classId };
     Smoke::ModuleIndex meth = nameId.smoke->findMethod(classIdx, nameId);
@@ -1549,8 +1552,9 @@ XS(XS_qt_metacall){
             name.replace(*rx, "");
 
             fprintf(stderr, "InvokeSlot\n");
-            PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
-            slot.next();
+            croak("sv_this what now?");
+            // PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
+            // slot.next();
         }
     }
 
@@ -1562,7 +1566,8 @@ XS(XS_qt_metacall){
 XS(XS_signal){
     dXSARGS;
 
-    smokeperl_object *o = sv_obj_info(sv_this);
+    croak("can't we do anything without using globals?");
+    smokeperl_object *o = 0; // sv_obj_info(sv_this);
 
     if(!o) croak("failed to get global variable duh");
     // segfault
@@ -1629,11 +1634,4 @@ XS(XS_signal){
     signal.next();
 
     // TODO: Handle signal return value
-}
-
-XS(XS_this) {
-    dXSARGS;
-    PERL_UNUSED_VAR(items);
-    ST(0) = sv_this;
-    XSRETURN(1);
 }

@@ -8,7 +8,7 @@
 #include "smokeperl.h" // for smokeperl_object
 #include "smokehelp.h" // for SmokeType and SmokeClass
 #include "handlers.h" // for getMarshallType
-#include "Qt.h" // for extern sv_this
+#include "Qt.h" // for debug stuff
 
 extern Smoke* qt_Smoke;
 
@@ -411,8 +411,10 @@ namespace PerlQt {
         SAVETMPS;
         PUSHMARK(SP);
         EXTEND(SP, items());
-        _savethis = sv_this;
-        sv_this = newSVsv(obj);
+        fprintf(stderr, "something with this\n");
+        fprintf(stderr, "something with this\n");
+        SV* sv_this = newSVsv(obj);
+        fprintf(stderr, "something with this\n");
         _sp = SP + 1;
         for(int i = 0; i < items(); i++)
             _sp[i] = sv_newmortal();
@@ -420,8 +422,8 @@ namespace PerlQt {
     }
 
     VirtualMethodCall::~VirtualMethodCall() {
-        SvREFCNT_dec(sv_this);
-        sv_this = _savethis;
+        fprintf(stderr, "wrong with this\n");
+        // XXX this used to decrement sv_this refcount...
     }
 
     Marshall::Action VirtualMethodCall::action() {

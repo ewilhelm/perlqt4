@@ -88,10 +88,7 @@ XS(XS_qmodelindex_internalpointer);
 XS(XS_qvariant_value);
 XS(XS_qvariant_from_value);
 
-XS(XS_AUTOLOAD);
 XS(XS_qt_metacall);
 XS(XS_signal);
-XS(XS_super);
-XS(XS_this);
 
 #endif

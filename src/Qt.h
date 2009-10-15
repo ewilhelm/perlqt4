@@ -17,7 +17,6 @@ void mapPointer(SV *obj, smokeperl_object *o, HV *hv, Smoke::Index classId, void
 Smoke::Index package_classId(const char *package);
 void unmapPointer( smokeperl_object* o, Smoke::Index classId, void* lastptr);
 
-extern SV* sv_this;
 extern HV* pointer_map;
 extern int do_debug;
 
