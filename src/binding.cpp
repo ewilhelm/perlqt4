@@ -55,7 +55,14 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
             ptr, qt_Smoke->classes[methodobj.classId].className, qt_Smoke->methodNames[methodobj.name] );
     }
 #endif
-    return false;
+
+    if( (qstrcmp("metaObject",
+      qt_Smoke->methodNames[qt_Smoke->methods[method].name]))
+      && (qstrcmp("qt_metacall",
+      qt_Smoke->methodNames[qt_Smoke->methods[method].name]))
+    )
+        return false;
+
     // Look for a perl sv associated with this pointer
     SV *obj = getPointerObject(ptr);
     if(obj) {

@@ -1479,16 +1479,19 @@ XS(XS_qt_metacall){
     PERL_UNUSED_VAR(items);
     PERL_SET_CONTEXT(PL_curinterp);
 
-    croak("you can't have sv_this here");
-    // Get my arguments off the stack
-    QObject* sv_this_ptr = 0; // (QObject*)sv_obj_info(sv_this)->ptr;
+    SV* sv_this = ST(0);
+    smokeperl_object* o = sv_obj_info(sv_this);
+    if(!o)
+      croak("must pass $self to qt_metacall not %s\n", SvPV_nolen(ST(0)));
+
+    QObject* sv_this_ptr = (QObject*) o->ptr;
+
     // This is an enum value, so it's stored as a scalar reference.
-    QMetaObject::Call _c = (QMetaObject::Call)SvIV(SvRV(ST(0)));
-    int _id = (int)SvIV(ST(1));
-    void** _a = (void**)sv_obj_info(ST(2))->ptr;
+    QMetaObject::Call _c = (QMetaObject::Call) SvIV(SvRV(ST(1)));
+    int _id = (int) SvIV(ST(2));
+    void** _a = (void**) sv_obj_info(ST(3))->ptr;
 
     // Assume the target slot is a C++ one
-    smokeperl_object* o = 0; // sv_obj_info(sv_this);
     Smoke::ModuleIndex nameId = o->smoke->idMethodName("qt_metacall$$?");
     Smoke::ModuleIndex classIdx = { o->smoke, o->classId };
     Smoke::ModuleIndex meth = nameId.smoke->findMethod(classIdx, nameId);
@@ -1551,10 +1554,9 @@ XS(XS_qt_metacall){
             }
             name.replace(*rx, "");
 
-            fprintf(stderr, "InvokeSlot\n");
-            croak("sv_this what now?");
-            // PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
-            // slot.next();
+            croak("InvokeSlot not working right now");
+            PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
+            slot.next();
         }
     }
 
@@ -1566,12 +1568,16 @@ XS(XS_qt_metacall){
 XS(XS_signal){
     dXSARGS;
 
-    croak("can't we do anything without using globals?");
-    smokeperl_object *o = 0; // sv_obj_info(sv_this);
+    smokeperl_object *o = sv_obj_info(ST(0));
+    --items;
 
-    if(!o) croak("failed to get global variable duh");
-    // segfault
-    QObject *qobj = (QObject*)o->smoke->cast( o->ptr, o->classId, o->smoke->idClass("QObject").index );
+    if(!o) croak("must pass object to signal");
+
+    QObject *qobj = (QObject*) o->smoke->cast(
+      o->ptr,
+      o->classId,
+      o->smoke->idClass("QObject").index
+    );
     if(qobj->signalsBlocked()) XSRETURN_UNDEF;
 
     // Each xs method has an implied cv argument that holds the info for the

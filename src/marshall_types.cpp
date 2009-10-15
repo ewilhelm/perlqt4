@@ -410,11 +410,8 @@ namespace PerlQt {
         ENTER;
         SAVETMPS;
         PUSHMARK(SP);
+        XPUSHs(obj); // pass the object along
         EXTEND(SP, items());
-        fprintf(stderr, "something with this\n");
-        fprintf(stderr, "something with this\n");
-        SV* sv_this = newSVsv(obj);
-        fprintf(stderr, "something with this\n");
         _sp = SP + 1;
         for(int i = 0; i < items(); i++)
             _sp[i] = sv_newmortal();
@@ -422,7 +419,6 @@ namespace PerlQt {
     }
 
     VirtualMethodCall::~VirtualMethodCall() {
-        fprintf(stderr, "wrong with this\n");
         // XXX this used to decrement sv_this refcount...
     }
 
@@ -442,7 +438,6 @@ namespace PerlQt {
         if (_called) return;
         _called = true;
 
-        // This is the stack pointer we'll pass to the perl call
         dSP;
         // This defines how many arguments we're sending to the perl sub
         SP = _sp + items() - 1;
