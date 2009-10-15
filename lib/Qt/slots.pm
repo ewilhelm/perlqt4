@@ -1,5 +1,16 @@
 package Qt::slots;
+
+# meta-hackery tools
+my $A = sub {my $n = shift; no strict 'refs'; \@{$n}};
+my $H = sub {my ($n) = @_; no strict 'refs'; no warnings 'once'; \%{$n}};
+my $SET = sub {my ($n, $v) = @_; no strict 'refs'; no warnings 'once';
+    ${$n} = $v};
+my $ISUB = sub {my ($n, $s) = @_; no strict 'refs'; *{$n} = $s};
+
+use strict;
+use warnings;
 use Carp;
+
 #
 # Proposed usage:
 #
@@ -9,19 +20,19 @@ use Carp;
 use Qt;
 
 sub import {
-    no strict 'refs';
     my $self = shift;
     croak "Odd number of arguments in slot declaration" if @_%2;
     my $caller = $self eq 'Qt::slots' ? (caller)[0] : $self;
     my(%slots) = @_;
-    my $meta = \%{ $caller . '::META' };
+
+    my $meta = $H->($caller . '::META');
 
     # The perl metaObject holds info about signals and slots, inherited
     # sig/slots, etc.  This is what actually causes perl-defined sig/slots to
     # be executed.
-    *{ "${caller}::metaObject" } = sub {
+    $ISUB->("${caller}::metaObject", sub {
         return Qt::_internal::getMetaObject($caller);
-    } unless defined &{ "${caller}::metaObject" };
+    }) unless defined &{ "${caller}::metaObject" };
 
     Qt::_internal::installqt_metacall( $caller ) unless defined &{$caller."::qt_metacall"};
     foreach my $fullslotname ( keys %slots ) {
@@ -29,7 +40,7 @@ sub import {
         # Determine the slot return type, if there is one
         my @returnParts = split / +/, $fullslotname;
         my $slotname = pop @returnParts; # Remove actual method name
-        $returnType = @returnParts ? join ' ', @returnParts : undef;
+        my $returnType = @returnParts ? join ' ', @returnParts : undef;
 
         # Build the signature for this slot
         my $signature = join '', ("$slotname(", join(',', @{$slots{$fullslotname}}), ')');
