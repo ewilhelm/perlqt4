@@ -1581,12 +1581,12 @@ XS(XS_signal){
     QLatin1String signalname( GvNAME(gv) );
 #ifdef DEBUG
     if(do_debug && (do_debug & qtdb_signals)){
-        char* package = HvNAME( GvSTASH(gv) );
-        fprintf( stderr, "In signal call %s::%s\n", package, GvNAME(gv) );
+        fprintf( stderr, "In signal call %s::%s\n", HvNAME( GvSTASH(gv) ), GvNAME(gv) );
         if(do_debug & qtdb_verbose) {
             fprintf(stderr, "with arguments (%s) ", SvPV_nolen(sv_2mortal(catArguments(SP - items + 1, items ))));
             // See cop.h in the perl src for more info on Control ops
-            fprintf(stderr, "called at line %lu in %s\n", CopLINE(PL_curcop), GvNAME(CopFILEGV(PL_curcop))+2 );
+            fprintf(stderr, "called at line %lu in %s\n",
+              (long unsigned int) CopLINE(PL_curcop), GvNAME(CopFILEGV(PL_curcop))+2 );
         }
     }
 #endif
