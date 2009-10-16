@@ -548,11 +548,10 @@ namespace PerlQt {
     void InvokeSlot::callMethod() {
         if (_called) return;
         _called = true;
+
         //Call the perl sub
         //Copy the way the VirtualMethodCall does it
         HV *stash = SvSTASH(SvRV(_this));
-        if(*HvNAME(stash) == ' ' ) // if withObject, look for a diff stash
-            stash = gv_stashpv(HvNAME(stash) + 1, TRUE);
 
         GV *gv = gv_fetchmethod_autoload(stash, _methodname, 0);
         if(!gv) {
@@ -573,6 +572,7 @@ namespace PerlQt {
         ENTER;
         SAVETMPS;
         PUSHMARK(SP);
+        XPUSHs(_this);
         EXTEND(SP, _items);
         for(int i=0;i<_items;++i){
             PUSHs(_sp[i]);

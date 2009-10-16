@@ -1554,7 +1554,6 @@ XS(XS_qt_metacall){
             }
             name.replace(*rx, "");
 
-            croak("InvokeSlot not working right now");
             PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
             slot.next();
         }

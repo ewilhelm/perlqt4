@@ -3,7 +3,7 @@ use strict;
 
 package MyApp;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use Qt;
 use parent qw(Qt::Application);
@@ -18,17 +18,17 @@ use Qt::signals
 sub new {
     my $self = shift->SUPER::new(@_);
 
-    # 1) testing correct subclassing of Qt::Application and this pointer
     is( ref($self), 'MyApp', 'Correct subclassing' ) or BAIL_OUT("stop there");
 
-    $self->connect($self, SIGNAL 'signal1(int,int)', SLOT 'slotToSignal(int,int)');
+    $self->connect($self, SIGNAL 'signal1(int,int)', SLOT 'slotToSignal(int,int)')
+      or die "cannot connect";
     $self->connect($self, SIGNAL 'signalFromSlot(int,int)', SLOT 'slot(int,int)');
 
     # 4) automatic quitting will test Qt sig to custom slot 
     $self->connect($self, SIGNAL 'aboutToQuit()', SLOT 'foo()');
 
     # 2) Emit a signal to a slot that will emit another signal
-    signal1( 5, 4 );
+    $self->signal1( 5, 4);
     return($self);
 }
 
@@ -37,12 +37,15 @@ sub foo {
 }     
 
 sub slotToSignal {
-    is_deeply( \@_, [ 5, 4 ], 'Custom signal to custom slot' );
+    my $self = shift;
+    is(scalar(@_), 2, '2 arguments') or die "something missing";
+    is_deeply([@_], [ 5, 4 ], 'Custom signal to custom slot' );
     # 3) Emit a signal to a slot from within a signal
-    emit signalFromSlot( @_ );
+    $self->signalFromSlot( @_ );
 }
 
 sub slot {
+    my $self = shift;
     is_deeply( \@_, [ 5, 4 ], 'Signal to slot to signal to slot' );
 }
 
@@ -56,4 +59,4 @@ my $app = MyApp->new(\@ARGV);
 
 Qt::Timer::singleShot( 300, $app, SLOT "quit()" );
 
-exit $app->exec;
+$app->exec;
