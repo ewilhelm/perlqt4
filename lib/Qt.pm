@@ -625,12 +625,7 @@ sub getMetaObject {
 
     # If this is a native Qt class, call metaObject() on that class directly
     if ( $package2classId{$class} ) {
-        my $classId = $package2classId{$class};
-        my $cxxClass = classFromId( $classId );
-        my ( $methodId ) = getSmokeMethodId( $classId, 'metaObject', $cxxClass );
-        die "how do we get here?";
-        DEBUG meta => "  getNativeMetaObject for $class\n";
-        return $meta->{object} = getNativeMetaObject( $methodId );
+        return $meta->{object} = $class->metaObject;
     }
 
     # Get the super class's meta object for sig/slot inheritance

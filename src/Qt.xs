@@ -161,23 +161,6 @@ getTypeNameOfArg( methodId, argnum )
     OUTPUT:
         RETVAL
 
-SV*
-getNativeMetaObject( methodId )
-        int methodId
-    CODE:
-        smokeperl_object* nothis = alloc_smokeperl_object( false, 0, 0, 0 );
-        PerlQt::MethodCall call(
-            qt_Smoke,
-            methodId,
-            nothis,
-            0,
-            0
-        );
-        call.next();
-        RETVAL = call.var();
-    OUTPUT:
-        RETVAL
-
 #// Args: int classId: a smoke classId
 #// Returns: The number of arguments that method has
 int
