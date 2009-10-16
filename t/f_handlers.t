@@ -1,13 +1,15 @@
 use Test::More tests => 23;
 
+use Devel::Peek ();
+
 use strict;
 use warnings;
 use Qt;
 
-my $app = Qt::Application( \@ARGV );
+my $app = Qt::Application->new( \@ARGV );
 
 {
-    my $widget = Qt::Widget();
+    my $widget = Qt::Widget->new();
     # Check refcount
     is ( Devel::Peek::SvREFCNT($widget), 1, 'refcount' );
     # Test Qt::String marshalling
@@ -17,7 +19,7 @@ my $app = Qt::Application( \@ARGV );
 }
 
 {
-    my $widget = Qt::Widget();
+    my $widget = Qt::Widget->new();
     # Test a string that has non-latin characters
     use utf8;
     my $wt = 'ターミナル';
@@ -29,13 +31,13 @@ my $app = Qt::Application( \@ARGV );
 
 {
     # Test int marshalling
-    my $widget = Qt::Widget();
+    my $widget = Qt::Widget->new();
     my $int = 341;
     $widget->resize( $int, $int );
     is ( $widget->height(), $int, 'int' );
 
     # Test marshalling to int from enum value
-    my $textFormat = Qt::TextCharFormat();
+    my $textFormat = Qt::TextCharFormat->new();
     $textFormat->setFontWeight( Qt::Font::Bold() );
     is ( $textFormat->fontWeight(), ${Qt::Font::Bold()}, 'enum to int' );
 }
@@ -43,14 +45,14 @@ my $app = Qt::Application( \@ARGV );
 {
     # Test double marshalling
     my $double = 3/7;
-    my $doubleValidator = Qt::DoubleValidator( $double, $double * 2, 5, undef );
+    my $doubleValidator = Qt::DoubleValidator->new( $double, $double * 2, 5, undef );
     is ( $doubleValidator->bottom(), $double, 'double' );
     is ( $doubleValidator->top(), $double * 2, 'double' );
 }
 
 {
     # Test bool marshalling
-    my $widget = Qt::Widget();
+    my $widget = Qt::Widget->new();
     my $bool = !$widget->isEnabled();
     $widget->setEnabled( $bool );
     is ( $widget->isEnabled(), $bool, 'bool' );
@@ -59,7 +61,7 @@ my $app = Qt::Application( \@ARGV );
 {
     # Test int* marshalling
     my ( $x1, $y1, $w1, $h1, $x2, $y2, $w2, $h2 ) = ( 5, 4, 50, 40 );
-    my $rect = Qt::Rect( $x1, $y1, $w1, $h1 );
+    my $rect = Qt::Rect->new( $x1, $y1, $w1, $h1 );
     $rect->getRect( $x2, $y2, $w2, $h2 );
     ok ( $x1 == $x2 &&
          $y1 == $y2 &&
@@ -70,7 +72,7 @@ my $app = Qt::Application( \@ARGV );
 
 {
     # Test unsigned int marshalling
-    my $label = Qt::Label();
+    my $label = Qt::Label->new();
     my $hcenter = ${Qt::AlignHCenter()};
     my $top = ${Qt::AlignTop()};
     $label->setAlignment(Qt::AlignHCenter() | Qt::AlignTop());
@@ -80,11 +82,11 @@ my $app = Qt::Application( \@ARGV );
 
 {
     # Test char and uchar marshalling
-    my $char = Qt::Char( Qt::Int(87) );
+    my $char = Qt::Char->new( Qt::Int->new(87) );
     is ( $char->toAscii(), 87, 'signed char' );
-    $char = Qt::Char( Qt::Uchar('f') );
+    $char = Qt::Char->new( Qt::Uchar->new('f') );
     is ( $char->toAscii(), ord('f'), 'unsigned char' );
-    $char = Qt::Char( 'f', 3 );
+    $char = Qt::Char->new( 'f', 3 );
     is ( $char->row(), 3, 'unsigned char' );
     is ( $char->cell(), ord('f'), 'unsigned char' );
 }
@@ -94,22 +96,22 @@ my $app = Qt::Application( \@ARGV );
     my $shortSize = length( pack 'S', 0 );
     my $num = 5;
     my $gotNum = 0;
-    my $block = Qt::ByteArray();
-    my $stream = Qt::DataStream($block, Qt::IODevice::ReadWrite());
+    my $block = Qt::ByteArray->new();
+    my $stream = Qt::DataStream->new($block, Qt::IODevice::ReadWrite());
     no warnings qw(void);
-    $stream << Qt::Short($num);
+    $stream << Qt::Short->new($num);
     my $streamPos = $stream->device()->pos();
     $stream->device()->seek(0);
-    $stream >> Qt::Short($gotNum);
+    $stream >> Qt::Short->new($gotNum);
     use warnings;
     is ( $gotNum, $num, 'signed short' );
 
     $gotNum = 0;
     no warnings qw(void);
     $stream->device()->seek(0);
-    $stream << Qt::Ushort($num);
+    $stream << Qt::Ushort->new($num);
     $stream->device()->seek(0);
-    $stream >> Qt::Ushort($gotNum);
+    $stream >> Qt::Ushort->new($gotNum);
     use warnings;
     is ( $gotNum, $num, 'unsigned short' );
     is ( $streamPos, $shortSize, 'long' );
@@ -117,9 +119,9 @@ my $app = Qt::Application( \@ARGV );
 
 {
     # Test some QLists
-    my $action1 = Qt::Action( 'foo', undef );
-    my $action2 = Qt::Action( 'bar', undef );
-    my $action3 = Qt::Action( 'baz', undef );
+    my $action1 = Qt::Action->new( 'foo', undef );
+    my $action2 = Qt::Action->new( 'bar', undef );
+    my $action3 = Qt::Action->new( 'baz', undef );
 
     # Add some stuff to them...
     $action1->{The} = 'quick';
@@ -128,7 +130,7 @@ my $app = Qt::Application( \@ARGV );
 
     my $actions = [ $action1, $action2, $action3 ]; 
 
-    my $widget = Qt::Widget();
+    my $widget = Qt::Widget->new();
     $widget->addActions( $actions );
 
     my $gotactions = $widget->actions();
@@ -139,7 +141,7 @@ my $app = Qt::Application( \@ARGV );
 {
     # Test ambiguous list call
     my $strings = [ qw( The quick brown fox jumped over the lazy dog ) ];
-    my $var = Qt::Variant( $strings );
+    my $var = Qt::Variant->new( $strings );
     my $newStrings = $var->toStringList();
     is_deeply( $strings, $newStrings, 'Ambiguous list resolution' );
 }
@@ -147,13 +149,13 @@ my $app = Qt::Application( \@ARGV );
 {
     # Test marshall_ValueListItem ToSV
     Qt::setSignature( 'QKeySequence::QKeySequence( int )' );
-    my $shortcut2 = Qt::KeySequence( Qt::Key_Tab() );
+    my $shortcut2 = Qt::KeySequence->new( Qt::Key_Tab() );
     # XXX this is unambiguous the first time?
     warn "what ? ", Qt::Key_Enter(), ",", Qt::Key_Tab();
-    my $shortcut1 = Qt::KeySequence( Qt::Key_Enter() );
+    my $shortcut1 = Qt::KeySequence->new( Qt::Key_Enter() );
 
     my $shortcuts = [ $shortcut1, $shortcut2 ];
-    my $action = Qt::Action( 'Foobar', undef );
+    my $action = Qt::Action->new( 'Foobar', undef );
 
     $action->setShortcuts( $shortcuts );
     my $gotshortcuts = $action->shortcuts();
@@ -164,8 +166,8 @@ my $app = Qt::Application( \@ARGV );
 }
 
 {
-    my $tree = Qt::TableView( undef );
-    my $model = Qt::DirModel();
+    my $tree = Qt::TableView->new( undef );
+    my $model = Qt::DirModel->new();
 
     $tree->setModel( $model );
     my $top = $model->index( Qt::Dir::currentPath() );
@@ -193,9 +195,9 @@ my $app = Qt::Application( \@ARGV );
 
 {
     # Test Qt::Object::findChildren
-    my $widget = Qt::Widget();
-    my $childWidget = Qt::Widget($widget);
-    my $childPushButton = Qt::PushButton($childWidget);
+    my $widget = Qt::Widget->new();
+    my $childWidget = Qt::Widget->new($widget);
+    my $childPushButton = Qt::PushButton->new($childWidget);
     my $children = $widget->findChildren('Qt::Widget');
     is_deeply( $children, [$childWidget, $childPushButton], 'Qt::Object::findChildren' );
     $children = $widget->findChildren('Qt::PushButton');
