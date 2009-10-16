@@ -21,9 +21,15 @@ extern HV* pointer_map;
 extern int do_debug;
 
 #ifdef DEBUG
-#define dbg_p(f, x) if(do_debug && (do_debug & f)) fprintf(stderr, x)
+inline void dbg_p(int flag, char* format, ...) {
+  va_list args;
+  if(! (do_debug && (do_debug & flag))) return;
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+}
 #else
-#define dbg_p(f, x)
+#define dbg_p(flag, format, args...) ((void)0)
 #endif
 
 #endif // QT_H

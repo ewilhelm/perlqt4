@@ -242,8 +242,14 @@ call_smoke(methodid, object, ...)
     CODE:
         
         PERL_SET_CONTEXT(PL_curinterp);
+        dbg_p(qtdb_calls, "call_smoke %d\n", methodid);
         int wasitems = items;
         items -= 2;
+
+        dbg_p(qtdb_calls, "call_smoke for %d - %s\n",
+          qt_Smoke->methods[methodid].name,
+          qt_Smoke->methodNames[qt_Smoke->methods[methodid].name]
+        );
 
         static smokeperl_object nothis = { 0, 0, 0, false };
         smokeperl_object* call_this = 0;
@@ -265,6 +271,9 @@ call_smoke(methodid, object, ...)
         if(!qt_Smoke->methods[methodid].flags & Smoke::mf_static) {
           if(!call_this->smoke) croak("not a static function");
         }
+
+        dbg_p(qtdb_calls, "setup for %d\n",
+          qt_Smoke->methods[methodid].name);
 
         PerlQt::MethodCall call(
           qt_Smoke, methodid, call_this, mystack, items);

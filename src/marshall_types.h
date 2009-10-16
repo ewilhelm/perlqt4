@@ -15,6 +15,7 @@
 #include "marshall.h"
 #include "binding.h" // for definition of PerlQt::Binding
 #include "smokeperl.h" // for smokeperl_object
+#include "Qt.h"        // for dbg_p
 
 void smokeStackToQtStack(Smoke::Stack stack, void ** o, int start, int end, QList<MocArgument*> args);
 void smokeStackFromQtStack(Smoke::Stack stack, void ** _o, int start, int end, QList<MocArgument*> args);
@@ -119,9 +120,11 @@ public:
             return;
         _called = true;
 
+        dbg_p(qtdb_marshall, "in callMethod()\n");
         Smoke::Method *method = _smoke->methods + _method;
         Smoke::ClassFn fn = _smoke->classes[method->classId].classFn;
 
+        dbg_p(qtdb_marshall, "stuff with pointers\n");
         void *ptr = _smoke->cast(
             _this->ptr,
             _this->classId,

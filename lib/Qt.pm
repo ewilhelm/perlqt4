@@ -445,6 +445,7 @@ sub go {
 
     $self = shift(@_) if($method =~ s/^\+//); # XXX silly workaround
 
+    DEBUG calls => "candidates: ", join(", ", @$id_list);
     # TODO check a single id's signature though
     my $id = @$id_list > 1 ?
         resolver($class, $method, @_) : $id_list->[0];
