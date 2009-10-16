@@ -413,11 +413,11 @@ sub install_autoload {
                 $notes->{$name} = 1;
             }
 
-            $code .= "sub $name {
-                unshift(\@_, '$where', '$k', [$id_list]); " .
+            $code .= "sub $name {" .
+                "unshift(\@_, '$where', '$k', [$id_list]); " .
                 "goto &Qt::_internal::go}\n";
         }
-        # warn "installing $code ";
+        DEBUG autoload => "installing $code ";
         eval($code);
         die $@ if($@); # TODO die with line numbers on $code
     }
@@ -628,6 +628,8 @@ sub getMetaObject {
         my $classId = $package2classId{$class};
         my $cxxClass = classFromId( $classId );
         my ( $methodId ) = getSmokeMethodId( $classId, 'metaObject', $cxxClass );
+        die "how do we get here?";
+        DEBUG meta => "  getNativeMetaObject for $class\n";
         return $meta->{object} = getNativeMetaObject( $methodId );
     }
 
@@ -639,14 +641,21 @@ sub getMetaObject {
     # This seems wrong, it won't work with multiple inheritance
     my $parentClass = $A->($class."::ISA")->[0]; 
     if( !$package2classId{$parentClass} ) {
+        DEBUG meta =>
+            "  recursive getMetaObject for $class ($parentClass)\n";
+
         # The parent class is a custom Perl class whose metaObject was
         # constructed at runtime, so we can get it's metaObject from here.
         $parentMeta = getMetaObject( $parentClass );
     }
     else {
+        DEBUG meta =>
+            "  guessed parent id for $class ($parentClass)\n";
         $parentClassId = $package2classId{$parentClass};
     }
 
+    DEBUG meta =>
+        "  now makeMetaData for $class\n";
     # Generate data to create the meta object
     my( $stringdata, $data ) = makeMetaData( $class );
     $meta->{object} = Qt::_internal::make_metaObject(

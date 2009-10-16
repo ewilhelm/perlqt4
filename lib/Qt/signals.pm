@@ -32,7 +32,7 @@ sub import {
     # be executed.
     $ISUB->("${caller}::metaObject", sub {
         return Qt::_internal::getMetaObject($caller);
-    }) unless defined &{ "${caller}::metaObject" };
+    }) unless defined &{"${caller}::metaObject"};
 
     # This makes any call to the signal name call XS_SIGNAL
     Qt::_internal::installqt_metacall( $caller )
