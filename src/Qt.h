@@ -23,7 +23,7 @@ extern int do_debug;
 #ifdef DEBUG
 inline void dbg_p(int flag, char* format, ...) {
   va_list args;
-  if(! (do_debug && (do_debug & flag))) return;
+  if(! (do_debug && ((do_debug & flag) == flag))) return;
   va_start(args, format);
   vfprintf(stderr, format, args);
   va_end(args);

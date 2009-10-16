@@ -44,13 +44,13 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
     PERL_SET_CONTEXT(PL_curinterp); // for threads
-#ifdef DEBUG
-    if( do_debug && (do_debug & qtdb_virtual) && (do_debug & qtdb_verbose)){
-        Smoke::Method methodobj = qt_Smoke->methods[method];
-        fprintf( stderr, "Looking for virtual method override for %p->%s::%s()\n",
-            ptr, qt_Smoke->classes[methodobj.classId].className, qt_Smoke->methodNames[methodobj.name] );
-    }
-#endif
+
+    dbg_p(qtdb_virtual|qtdb_verbose,
+      "Looking for virtual method override for %p->%s::%s()\n",
+      ptr,
+      qt_Smoke->classes[qt_Smoke->methods[method].classId].className,
+      qt_Smoke->methodNames[qt_Smoke->methods[method].name]
+    );
 
     // Look for a perl sv associated with this pointer
     SV *obj = getPointerObject(ptr);
@@ -59,8 +59,9 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
     // Didn't find one
     if(!o) {
 #ifdef DEBUG
-        if(!PL_dirty && (do_debug && (do_debug & qtdb_virtual) && (do_debug & qtdb_verbose)))// If not in global destruction
-            fprintf(stderr, "Cannot find object for virtual method\n");
+        if(!PL_dirty)// If not in global destruction
+            dbg_p(qtdb_virtual|qtdb_verbose,
+              "Cannot find object for virtual method\n");
 #endif
         return false;
     }

@@ -17,7 +17,9 @@ our %channel = (
     signals   => 0x40,
     slots     => 0x80,
     marshall  => 0x100,
-    'all' => 0xffff
+    meta      => 0x200,
+
+    all       => 0xffff
 );
 
 sub dumpMetaMethods {
@@ -93,7 +95,7 @@ sub DEBUG (@) {
     $db_flag |= $channel{$flag};
   }
 
-  return unless($db_flag & Qt::_internal::getDebug());
+  return unless(($db_flag & Qt::_internal::getDebug()) == $db_flag);
 
   # my $x = $Carp::Verbose;
   if($msg[-1] =~ m/\n$/ and not $Carp::Verbose) {

@@ -616,6 +616,7 @@ sub getSmokeMethodId {
 sub getMetaObject {
     my $class = shift;
 
+    DEBUG meta => "getMetaObject";
     my $meta = $H->($class . '::META');
 
     # If no signals/slots/properties have been added since the last time this
