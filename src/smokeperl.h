@@ -35,6 +35,7 @@ enum QtDebugChannel {
     qtdb_verbose = 0x20,
     qtdb_signals = 0x40,
     qtdb_slots = 0x80,
+    qtdb_marshall = 0x100,
 };
 
 enum MocArgumentType {

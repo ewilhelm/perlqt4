@@ -20,4 +20,10 @@ void unmapPointer( smokeperl_object* o, Smoke::Index classId, void* lastptr);
 extern HV* pointer_map;
 extern int do_debug;
 
+#ifdef DEBUG
+#define dbg_p(f, x) if(do_debug && (do_debug & f)) fprintf(stderr, x)
+#else
+#define dbg_p(f, x)
+#endif
+
 #endif // QT_H

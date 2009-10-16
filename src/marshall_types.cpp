@@ -345,8 +345,6 @@ namespace PerlQt {
     MethodCallBase::MethodCallBase(Smoke *smoke, Smoke::Index meth) :
         _smoke(smoke), _method(meth), _cur(-1), _called(false), _sp(0)  
     {  
-        fprintf(stderr, "construct MethodCallBase for %s\n",
-          _smoke->methodNames[method().name]); 
     }
 
     MethodCallBase::MethodCallBase(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack) :
@@ -374,14 +372,18 @@ namespace PerlQt {
         int oldcur = _cur;
         _cur++;
         while( !_called && _cur < items() ) {
+            dbg_p(qtdb_marshall, ("getMarshallFn\n"));
             Marshall::HandlerFn fn = getMarshallFn(type());
+            dbg_p(qtdb_marshall, ("got\n"));
 
             // The handler will call this function recursively.  The control
             // flow looks like: 
             // MethodCallBase::next -> TypeHandler fn -> recurse back to next()
             // until all variables are marshalled -> callMethod -> TypeHandler
             // fn to clean up any variables they create
+            dbg_p(qtdb_marshall, ("call\n"));
             (*fn)(this);
+            dbg_p(qtdb_marshall, ("called\n"));
             _cur++;
         }
 
@@ -404,8 +406,7 @@ namespace PerlQt {
 
     VirtualMethodCall::VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, SV *obj, GV *gv) :
       MethodCallBase(smoke,meth,stack), _gv(gv){
-        fprintf(stderr, "construct VirtualMethodCall for %s\n",
-          _smoke->methodNames[method().name]); 
+
         dSP;
         ENTER;
         SAVETMPS;

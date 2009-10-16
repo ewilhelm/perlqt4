@@ -379,7 +379,6 @@ void marshall_basetype(Marshall* m) {
 
                     // Bless a HV ref into that package name, and shove o into
                     // var
-                    fprintf(stderr, "sending '%s'\n", classname);
                     var = sv_2mortal(set_obj_info( classname, o ) );
 
                     // Store this into the ptr map for reference from virtual
@@ -1730,7 +1729,7 @@ void marshall_QPairqrealQColor(Marshall *m) {
             smokeperl_object *o;
 
             if ( !item2 || !SvOK( *item2 ) || SvTYPE(*item2) != SVt_PVMG ) {
-                // Error
+                croak("item error");
             }
             else {
                 o = sv_obj_info(*item2);

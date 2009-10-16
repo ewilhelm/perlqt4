@@ -92,6 +92,8 @@ package Qt::_internal;
 use strict;
 use warnings;
 
+use Qt::debug;
+
 use List::MoreUtils qw(uniq);
 
 # lookup hashes
@@ -324,7 +326,7 @@ sub install_autoload {
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
-        Carp::carp("autoloading $where for ($package) $method");
+        DEBUG calls => "autoloading $where for ($package) $method";
 
         { no strict 'refs'; delete ${"$where\::"}{AUTOLOAD}; }
         populate_class($where);
@@ -333,7 +335,7 @@ sub install_autoload {
         }
         elsif(my $autosub = $where->can('AUTOLOAD')) {
             # TODO that's actually in parent
-            warn "try parent autoload";
+            DEBUG calls => "try parent autoload";
             goto $autosub;
         }
         else {
@@ -421,47 +423,6 @@ sub install_autoload {
     }
 } # end closure
 
-sub installautoload {
-    my ($where) = @_;
-    Carp::carp("this doesn't work");
-
-    # warn "install autoload in '$where'\n";
-    package Qt::AutoLoad;
-use constant debug => $ENV{DEBUG};
-    our $AUTOLOAD;
-    $ISUB->("$where\::AUTOLOAD", sub {
-        (my $method = $AUTOLOAD) =~ s/(.*):://;
-        my $package = $1;
-        debug and warn "called AUTOLOAD in '$where' for '$package'->$method\n";
-        debug and warn "  (@_)\n";
-        return if($method eq 'DESTROY');
-        if($package =~ s/^  //) {
-            # debug and warn "I don't speak super";
-            $package .= '::SUPER';
-        }
-        if($package =~ s/^ //) {
-        }
-        if(my $ref = "$package"->can($method)) {
-            debug and warn "goto Perl $method";
-            goto &$ref;
-        }
-        package Qt::_internal;
-
-        # if the object is of this class, treat as an object method
-        my $self = ((ref($_[0])||'') eq $where) ? shift(@_) : undef;
-
-        my $class_id = find_class_id($package);
-        my ($id, $what) = getSmokeMethodId(@_,
-            $class_id, $method, $classId2class{$class_id}
-        );
-        # warn "got $id $what";
-        unshift(@_, $id, $self);
-        goto &call_smoke;
-    });
-    # XXX there's still a mess somewhere
-    $ISUB->("$where\::_UTOLOAD", \&{"$where\::AUTOLOAD"});
-}
-
 sub resolver {
     my $class = shift;
     my $method = shift;
@@ -489,7 +450,7 @@ sub go {
         resolver($class, $method, @_) : $id_list->[0];
 
     unshift(@_, $id, $self);
-    warn "call $class\::$method() as ",
+    DEBUG calls => "call $class\::$method() as ",
         join(',', map({defined($_) ? $_ : '*undef*'} @_));
     goto &call_smoke;
 }
@@ -526,7 +487,6 @@ sub getSmokeMethodId {
     foreach my $arg ( @_ ) {
         if (!defined $arg) {
             # An undefined value requires a search for each type of argument
-            warn "not defined";
             @mungedMethods = map { $_ . '#', $_ . '?', $_ . '$' } @mungedMethods;
         } elsif(isObject($arg)) {
             @mungedMethods = map { $_ . '#' } @mungedMethods;
@@ -536,7 +496,7 @@ sub getSmokeMethodId {
             @mungedMethods = map { $_ . '$' } @mungedMethods;
         }
     }
-     warn "lookup $classname @mungedMethods";
+    DEBUG calls => "lookup $classname @mungedMethods";
     my @methodIds = map { findMethod( $classname, $_ ) } @mungedMethods;
 
     my $cacheLookup = 1;
@@ -544,20 +504,17 @@ sub getSmokeMethodId {
     # If we didn't get any methodIds, look for alternatives, and try convert
     # the arguments we have to the kind this method call wants
     if (!@methodIds) {
-        warn "found nothing\n";
         my @altMethod = findAnyPossibleMethod( $classname, $methodname, @_ );
 
         # Only try this if there's only one possible alternative
         if ( @altMethod == 1 ) {
             my $altMethod = $altMethod[0];
             foreach my $argId ( 0..$#_ ) {
-                warn "lookup $altMethod $argId";
                 my $wantType = getTypeNameOfArg( $altMethod, $argId );
                 $wantType =~ s/^const\s+//;
                 $wantType =~ s/(?<=\w)[&*]$//g;
                 $wantType = normalize_classname( $wantType );
                 no strict qw( refs );
-                warn "$wantType <-- ";
                 $_[$argId] = $wantType->( $_[$argId] );
                 use strict;
             }
@@ -569,7 +526,6 @@ sub getSmokeMethodId {
 
     # If we got more than 1 method id, resolve it
     if (@methodIds > 1) {
-        warn "found multiple\n";
         foreach my $argNum (0..$#_) {
             my @matching = argmatch( \@methodIds, \@_, $argNum );
             if (@matching) {
@@ -596,7 +552,6 @@ sub getSmokeMethodId {
 
         # If we still have more than 1 match, use the first one.
         if ( @methodIds > 1 ) {
-            warn "still multiple";
             # A constructor call will be 4 levels deep on the stack, everything
             # else will be 2
             my $stackDepth = ( $methodname eq $classname ) ? 4 : 2;
@@ -620,7 +575,6 @@ sub getSmokeMethodId {
         }
     }
     elsif ( @methodIds == 1 and @_ ) {
-        warn "just one here";
         # We have one match and arguments.  We need to make sure our input
         # arguments match what the method is expecting.  Clear methodIds if
         # args don't match

@@ -15,9 +15,7 @@ is(ref $app, 'Qt::Application', 'blessed correctly');
 eval { qApp->libraryPaths() };
 ok( !+$@, 'qApp properly set up' ) or BAIL_OUT($@);
 
-warn "now singleShot()";
 Qt::Timer::singleShot( 300, qApp, SLOT 'quit()' );
-warn "what?";
 
 alarm(2);
 ok( !qApp->exec, 'Timer leaves event loop' );

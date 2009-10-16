@@ -1,15 +1,22 @@
 package Qt::debug;
-use Qt;
+
+use warnings;
+use strict;
+use Carp;
+
+require Exporter;
+our @EXPORT = qw(DEBUG);
 
 our %channel = (
-    'ambiguous' => 0x01,
-    'autoload' => 0x02,
-    'calls' => 0x04,
-    'gc' => 0x08,
-    'virtual' => 0x10,
-    'verbose' => 0x20,
-    'signals' => 0x40,
-    'slots' => 0x80,
+    ambiguous => 0x01,
+    autoload  => 0x02,
+    calls     => 0x04,
+    gc        => 0x08,
+    virtual   => 0x10,
+    verbose   => 0x20,
+    signals   => 0x40,
+    slots     => 0x80,
+    marshall  => 0x100,
     'all' => 0xffff
 );
 
@@ -48,7 +55,15 @@ sub dumpMetaMethods {
 }
 
 sub import {
-    shift;
+    my $package = shift;
+
+    unless(@_) {
+      unshift(@_, $package);
+      goto &Exporter::import;
+    }
+
+    require Qt;
+
     my $db = (@_)? 0x0000 : (0x01|0x80);
     my $usage = 0;
     for my $ch(@_) {
@@ -67,6 +82,27 @@ sub import {
 
 sub unimport {
     Qt::_internal::setDebug(0);    
+}
+
+sub DEBUG (@) {
+  my ($flags, @msg) = @_;
+
+  my $db_flag = 0;
+  foreach my $flag (split(/\|/, $flags)) {
+    croak("no such channel '$flag'") unless(exists $channel{$flag});
+    $db_flag |= $channel{$flag};
+  }
+
+  return unless($db_flag & Qt::_internal::getDebug());
+
+  # my $x = $Carp::Verbose;
+  if($msg[-1] =~ m/\n$/ and not $Carp::Verbose) {
+    warn @msg;
+  }
+  else {
+    local $Carp::CarpLevel = 1;
+    Carp::carp(@msg);
+  }
 }
 
 1;

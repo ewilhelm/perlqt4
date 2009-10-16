@@ -266,18 +266,14 @@ call_smoke(methodid, object, ...)
           if(!call_this->smoke) croak("not a static function");
         }
 
-        fprintf(stderr, "calling %d\n", methodid);
-        PerlQt::MethodCall call(qt_Smoke, methodid, call_this, mystack, items);
-        fprintf(stderr, "constructed\n");
+        PerlQt::MethodCall call(
+          qt_Smoke, methodid, call_this, mystack, items);
         call.next();
-        fprintf(stderr, "called it\n");
         delete [] mystack;
         RETVAL = call.var();
-        if(qt_Smoke->methods[methodid].flags & Smoke::mf_ctor) {
-          fprintf(stderr, "should bless this\n");
-          char * packagename = SvPV_nolen(object);
-          sv_bless( RETVAL, gv_stashpv(packagename, TRUE) );
-        }
+        if(qt_Smoke->methods[methodid].flags & Smoke::mf_ctor)
+          sv_bless(RETVAL,
+            gv_stashpv(SvPV_nolen(object), TRUE) );
     OUTPUT:
         RETVAL
 
@@ -371,6 +367,13 @@ setDebug(channel)
         int channel
     CODE:
         do_debug = channel;
+
+int
+getDebug()
+    CODE:
+        RETVAL = do_debug;
+    OUTPUT:
+        RETVAL
 
 void*
 sv_to_ptr(sv)
