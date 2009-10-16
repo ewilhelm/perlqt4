@@ -43,11 +43,7 @@ void Binding::deleted(Smoke::Index /*classId*/, void *ptr) {
 }
 
 bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract) {
-    // XXX this should only try to call perl methods if they were not
-    // installed by the binding
-    // If the Qt process forked, we want to make sure we can see the
-    // interpreter
-    // PERL_SET_CONTEXT(PL_curinterp);
+    PERL_SET_CONTEXT(PL_curinterp); // for threads
 #ifdef DEBUG
     if( do_debug && (do_debug & qtdb_virtual) && (do_debug & qtdb_verbose)){
         Smoke::Method methodobj = qt_Smoke->methods[method];
@@ -56,18 +52,8 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
     }
 #endif
 
-    if( (qstrcmp("metaObject",
-      qt_Smoke->methodNames[qt_Smoke->methods[method].name]))
-      && (qstrcmp("qt_metacall",
-      qt_Smoke->methodNames[qt_Smoke->methods[method].name]))
-    )
-        return false;
-
     // Look for a perl sv associated with this pointer
     SV *obj = getPointerObject(ptr);
-    if(obj) {
-      fprintf(stderr, "got a pointerObject\n");
-    }
     smokeperl_object *o = sv_obj_info(obj);
 
     // Didn't find one
@@ -79,15 +65,20 @@ bool Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool
         return false;
     }
 
-    // Now find the stash for this perl object
-    HV *stash = SvSTASH(SvRV(obj));
-
-    // Get the name of the method being called
+    // see if anybody defined this method in perl
     const char *methodname = smoke->methodNames[smoke->methods[method].name];
-    // Look up the autoload subroutine for that method
+    HV *stash = SvSTASH(SvRV(obj));
     GV *gv = gv_fetchmethod_autoload(stash, methodname, 0);
-    // Found no autoload function
-    if(!gv) return false;
+    if(! (gv && GvCV(gv))) return false;
+
+    // XXX this is a bit heavy vs just not populating virtual methods!
+    // but see if this was just c++ code defined in populate_class()
+    HV* notes = get_hv(form("%s::%s", 
+      CvSTASH(GvCV(gv)) ?
+        HvNAME(CvSTASH(GvCV(gv))) : HvNAME(GvSTASH(gv)), "_CXXCODE"), 0
+      );
+    if(notes and hv_exists(notes, methodname, strlen(methodname)))
+        return false;
 
 #ifdef DEBUG
     if( do_debug && ( do_debug & qtdb_virtual ) )

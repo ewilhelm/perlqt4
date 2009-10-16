@@ -395,6 +395,7 @@ sub install_autoload {
             unless(defined $cxx_class);
         my $h = get_methods_for($cxx_class) or die "oh no";
 
+        my $notes = $H->("$where\::_CXXCODE");
         my $code = qq(package $where;\nuse warnings; use strict;\n);
         foreach my $k (sort keys %$h) {
             next if($k =~ m/^~/);
@@ -403,7 +404,13 @@ sub install_autoload {
 
             $k = '+'.$k if($k eq $cxx); # XXX silly workaround
 
-            $name = '__'.$name if(defined &{"$where\::$name"});
+            if(defined &{"$where\::$name"}) {
+                $name = '__'.$name;
+            }
+            else {
+                $notes->{$name} = 1;
+            }
+
             $code .= "sub $name {
                 unshift(\@_, '$where', '$k', [$id_list]); " .
                 "goto &Qt::_internal::go}\n";
