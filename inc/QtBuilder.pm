@@ -6,11 +6,13 @@ use Carp;
 
 use base 'Module::Build';
 
+QtBuilder->add_property(build_puic => 1);
+
 sub ACTION_code {
   my $self = shift;
   $self->SUPER::ACTION_code(@_);
 
-  $self->depends_on('puic');
+  $self->depends_on('puic') if($self->build_puic);
 }
 sub ACTION_puic {
   my $self = shift;

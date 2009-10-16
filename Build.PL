@@ -27,6 +27,8 @@ my( $userSmokeDir, $userSmokeIncDir, $userSmokeLibDir,
 my @flags;
 my @libs;
 
+my $build_puic = 1;
+
 GetOptions(
     '--with-smoke-dir:s' => \$userSmokeDir,
     '--with-smoke-inc-dir:s' => \$userSmokeIncDir,
@@ -35,6 +37,7 @@ GetOptions(
     '--with-qt-inc-dir:s' => \$userQtIncDir,
     '--with-qt-lib-dir:s' => \$userQtLibDir,
     '--with-debug' => sub {push(@flags, '-DDEBUG')},
+    '--puic!' => \$build_puic,
 );
 
 if( $userSmokeDir ) {
@@ -124,6 +127,8 @@ my $builder = QtBuilder->new(
 
   extra_compiler_flags  => \@flags,
   extra_linker_flags    => \@libs,
+
+  build_puic => $build_puic,
 
   requires => {
     'perl'                  => 5.006,
