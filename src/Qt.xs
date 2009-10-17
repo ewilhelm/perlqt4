@@ -269,6 +269,11 @@ call_smoke(methodid, object, ...)
     OUTPUT:
         RETVAL
 
+#// This is because QMetaObject doesn't really have a proper public
+#// constructor, let alone one that would marshall nicely from Perl.
+#// When we've subclassed a Qt class in Perl, this is used to create
+#// the metaObject -- but is very entangled to the perl code in
+#// makeMetaData() via the stringdata_sv stuff.
 SV*
 make_metaObject(parentClassId,parentMeta,stringdata_sv,data_sv)
         SV* parentClassId
@@ -339,7 +344,7 @@ make_metaObject(parentClassId,parentMeta,stringdata_sv,data_sv)
 
         HV *hv = newHV();
         RETVAL = newRV_noinc((SV*)hv);
-        sv_bless( RETVAL, gv_stashpv( " Qt::MetaObject", TRUE ) );
+        sv_bless( RETVAL, gv_stashpv( "Qt::MetaObject", TRUE ) );
         sv_magic((SV*)hv, 0, '~', (char*)&o, sizeof(o));
         //Not sure we need the entry in the pointer_map
         mapPointer(RETVAL, &o, pointer_map, o.classId, 0);

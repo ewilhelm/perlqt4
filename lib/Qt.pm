@@ -649,8 +649,7 @@ sub getMetaObject {
         $parentClassId = $package2classId{$parentClass};
     }
 
-    DEBUG meta =>
-        "  now makeMetaData for $class\n";
+    DEBUG meta => "  now makeMetaData for $class\n";
     # Generate data to create the meta object
     my( $stringdata, $data ) = makeMetaData( $class );
     $meta->{object} = Qt::_internal::make_metaObject(
