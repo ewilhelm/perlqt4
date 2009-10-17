@@ -157,6 +157,12 @@ getTypeNameOfArg( methodId, argnum )
     CODE:
         Smoke::Method &method = qt_Smoke->methods[methodId];
         Smoke::Index* args = qt_Smoke->argumentList + method.args;
+        if(argnum >= method.numArgs)
+            croak("method %s (%d) only has %d args\n",
+              qt_Smoke->methodNames[method.name],
+              methodId,
+              method.numArgs
+            );
         RETVAL = (char*)qt_Smoke->types[args[argnum]].name;
     OUTPUT:
         RETVAL
