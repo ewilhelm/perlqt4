@@ -120,20 +120,23 @@ public:
             return;
         _called = true;
 
-        dbg_p(qtdb_marshall, "in callMethod()\n");
+        dbg_p(qtdb_marshall, "in callMethod() (%d)\n", _method);
         Smoke::Method *method = _smoke->methods + _method;
         Smoke::ClassFn fn = _smoke->classes[method->classId].classFn;
 
+        dbg_p(qtdb_marshall, "fn is %p\n", fn);
         dbg_p(qtdb_marshall, "stuff with pointers\n");
         void *ptr = _smoke->cast(
             _this->ptr,
             _this->classId,
             _smoke->methods[_method].classId
         );
+        dbg_p(qtdb_marshall, "got something %p\n", ptr);
 
         // Call the method
         (*fn)(method->method, ptr, _stack);
 
+        dbg_p(qtdb_marshall, "...\n");
         // Tell the method call what binding to use
         if (method->flags & Smoke::mf_ctor) {
             Smoke::StackItem s[2];
