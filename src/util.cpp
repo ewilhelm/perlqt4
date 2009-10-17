@@ -175,6 +175,7 @@ SV* catArguments(SV** sp, int n) {
 
 #endif
 
+// characterizes the type of an sv
 const char* get_SVt(SV* sv) {
     const char* r;
     if(!SvOK(sv))

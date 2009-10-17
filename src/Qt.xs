@@ -77,8 +77,10 @@ SV*
 get_methods_for(classname)
         char* classname
     CODE:
-        HV *hv = newHV();
+        HV *hv = newHV(); // $method_name => [@ids]
         Smoke::Method * m = qt_Smoke->methods;
+        // XXX this should just get the classid, then do a bisect search
+        // on methods to hit just the handful of methods for the class.
         for(int i = 0; i < qt_Smoke->numMethods; i++) {
           if(0 != qstrcmp(classname,
             qt_Smoke->classes[m[i].classId].className))
