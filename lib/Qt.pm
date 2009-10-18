@@ -558,17 +558,7 @@ sub getSmokeMethodId {
 
         # If we still have more than 1 match, use the first one.
         if ( @methodIds > 1 ) {
-            # A constructor call will be 4 levels deep on the stack, everything
-            # else will be 2
-            my $stackDepth = ( $methodname eq $classname ) ? 4 : 2;
-            my @caller = caller($stackDepth);
-            while ( $caller[1] =~ m/Qt\.pm$/ || $caller[1] =~ m/Qt\/isa\.pm/ ) {
-                ++$stackDepth;
-                @caller = caller($stackDepth);
-            }
-            my $msg = "--- Ambiguous method ${classname}::$methodname" .
-                ' called at ' . $caller[1] .
-                ' line ' . $caller[2] . "\n";
+            my $msg = "--- Ambiguous method ${classname}::$methodname";
             $msg .= "Candidates are:\n\t";
             $msg .= join "\n\t", dumpCandidates( $classname, $methodname, \@methodIds );
             $msg .= "\nChoosing first one...\n";
@@ -585,17 +575,9 @@ sub getSmokeMethodId {
         # arguments match what the method is expecting.  Clear methodIds if
         # args don't match
         if (!objmatch($methodIds[0], \@_)) {
-            my $stackDepth = ( $methodname eq $classname ) ? 4 : 2;
-            my @caller = caller($stackDepth);
-            while ( $caller[1] =~ m/Qt\.pm$/ || $caller[1] =~ m/Qt\/isa\.pm/ ) {
-                ++$stackDepth;
-                @caller = caller($stackDepth);
-            }
             my $errStr = '--- Arguments for method call ' .
                 "$classname\::$methodname did not match C++ method ".
-                "signature," .
-                ' called at ' . $caller[1] .
-                ' line ' . $caller[2] . "\n";
+                "signature,";
             $errStr .= "Method call was:\n\t";
             $errStr .= "$classname\::$methodname( " . dumpArgs(@_) . " )\n";
             $errStr .= "C++ signature is:\n\t";
@@ -759,14 +741,12 @@ sub reportAlternativeMethods {
     my $methodname = shift;
     my $methodIds = shift;
     # @_ now equals the original argument array of the method call
-    my $stackDepth = ( $methodname eq $classname ) ? 5 : 3;
     my $errStr = '--- Arguments for method call ' .
         "$classname\::$methodname did not match any known C++ method ".
-        "signature," .
-        ' called at ' . (caller($stackDepth))[1] .
-        ' line ' . (caller($stackDepth))[2] . "\n";
+        "signature,";
     $errStr .= "Method call was:\n\t";
-    $errStr .= "$classname\::$methodname( " . dumpArgs(@_) . " )\n";
+    $errStr .= "$classname\::$methodname( " . dumpArgs(@_) . " )" .
+        Carp::shortmess();
     $errStr .= "Possible candidates:\n\t";
     $errStr .= join( "\n\t", dumpCandidates( $classname, $methodname, $methodIds ) ) . "\n";
     return $errStr;
@@ -777,19 +757,9 @@ sub reportNoMethodFound {
     my $methodname = shift;
     # @_ now equals the original argument array of the method call
 
-    my $stackDepth = ( $methodname eq $classname ) ? 5 : 3;
-
-    # Look up the stack to find who called us.  We don't care if it was
-    # called from Qt.pm or isa.pm
-    my @caller = caller($stackDepth);
-    while ( $caller[1] =~ m/Qt\.pm$/ || $caller[1] =~ m/Qt\/isa\.pm/ ) {
-        ++$stackDepth;
-        @caller = caller($stackDepth);
-    }
     my $errStr = '--- Error: Method does not exist or not provided by this ' .
         "binding:\n";
     $errStr .= "$classname\::$methodname(),\n";
-    $errStr .= 'called at ' . $caller[1] . ' line ' . $caller[2] . "\n";
     return $errStr;
 }
 
