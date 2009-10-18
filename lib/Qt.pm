@@ -909,24 +909,20 @@ sub normalize_classname {
 }
 
 sub objmatch {
-    my ( $methodname, $args ) = @_;
+    my ($id, $args) = @_;
 
-    DEBUG calls => "running objmatch on $methodname()";
-    foreach my $i ( 0..$#$args ) {
-        # Compare our actual args to what the method expects
-        my $argtype = getSVt($$args[$i]);
+    DEBUG calls => "running objmatch on $id";
+    my @ptypes = map({getSVt($_)} @$args);
+    my @ctypes = get_arg_types($id);
+    for my $i ( 0..$#ptypes ) {
+        next if length $ptypes[$i] == 1;
 
-        # argtype will be only 1 char if it is not an object. If that's the
-        # case, don't do any checks.
-        next if length $argtype == 1;
+        my $typename = $ctypes[$i] or last; # no?
 
-        my $typename = getTypeNameOfArg( $methodname, $i );
-
-        # We don't care about const or [&*]
-        $typename =~ s/^const\s+//;
-        $typename =~ s/(?<=\w)[&*]$//g;
-
-        return 0 if classIsa($argtype, $typename) == -1;
+        $typename =~ s/^(?:const\s+)?(\w+)[&*]?$/$1/g;
+        DEBUG verbose_calls =>
+            "check classIsa $ptypes[$i] vs $typename ";
+        return 0 if classIsa($ptypes[$i], $typename) == -1;
     }
     return 1;
 }
