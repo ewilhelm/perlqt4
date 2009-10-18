@@ -298,12 +298,11 @@ sub dumpArgs {
 }
 
 sub dumpCandidates {
-    my ( $classname, $methodname, $methodIds ) = @_;
+    my ($classname, $methodname, $ids) = @_;
     my @methods;
-    foreach my $id ( @{$methodIds} ) {
-        my $numArgs = getNumArgs( $id );
+    foreach my $id (@$ids) {
         my $method = "$id\: $classname\::$methodname( ";
-        $method .= join ', ', map{ getTypeNameOfArg( $id, $_ ) } ( 0..$numArgs-1 );
+        $method .= join ', ', get_arg_types($id);
         $method .= " )";
         push @methods, $method;
     }

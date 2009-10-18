@@ -169,6 +169,23 @@ getTypeNameOfArg( methodId, argnum )
     OUTPUT:
         RETVAL
 
+=head2 get_arg_types
+
+Returns the C argument types for the given $method_id.
+
+  @types = get_arg_types($method_id);
+
+=cut
+
+void
+get_arg_types(method_id)
+    int method_id
+  PPCODE:
+    Smoke::Method &method = qt_Smoke->methods[method_id];
+    Smoke::Index* args = qt_Smoke->argumentList + method.args;
+    for(int i = 0; i < method.numArgs; i++)
+      XPUSHs(sv_2mortal(newSVpv(qt_Smoke->types[args[i]].name, 0)));
+
 #// Args: int classId: a smoke classId
 #// Returns: The number of arguments that method has
 int
