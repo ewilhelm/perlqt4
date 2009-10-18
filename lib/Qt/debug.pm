@@ -90,7 +90,7 @@ sub DEBUG (@) {
   my ($flags, @msg) = @_;
 
   my $db_flag = 0;
-  foreach my $flag (split(/\|/, $flags)) {
+  foreach my $flag (split(/_/, $flags)) {
     croak("no such channel '$flag'") unless(exists $channel{$flag});
     $db_flag |= $channel{$flag};
   }

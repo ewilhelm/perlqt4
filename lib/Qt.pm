@@ -144,7 +144,7 @@ sub argmatch {
     foreach my $methodIdIdx ( 0..$#{$methodIds} ) {
         my $methodId = $methodIds->[$methodIdIdx];
         my $typeName = getTypeNameOfArg( $methodId, $argNum );
-        warn "check $typeName vs $argType ($args->[$argNum])\n";
+        # warn "check $typeName vs $argType ($args->[$argNum])\n";
         #ints and bools
         if ( $argType eq 'i' ) {
             if( $typeName =~ m/^(?:bool|(?:(?:un)?signed )?(?:int|long)|uint)[*&]?$/ ) {
@@ -280,7 +280,7 @@ sub argmatch {
         return -1;
     }
 
-    warn "matched ", scalar(keys %match), " possibilities\n";
+    # warn "matched ", scalar(keys %match), " possibilities\n";
     return sort { $match{$b}[0] <=> $match{$a}[0] or $match{$a}[1] <=> $match{$b}[1] } keys %match;
 }
 
@@ -326,7 +326,7 @@ sub install_autoload {
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
-        DEBUG calls => "autoloading $where for ($package) $method";
+        DEBUG autoload => "autoloading $where for ($package) $method";
 
         { no strict 'refs'; delete ${"$where\::"}{AUTOLOAD}; }
         populate_class($where);
@@ -335,7 +335,7 @@ sub install_autoload {
         }
         elsif(my $autosub = $where->can('AUTOLOAD')) {
             # TODO that's actually in parent
-            DEBUG calls => "try parent autoload";
+            DEBUG autoload => "try parent autoload";
             goto $autosub;
         }
         else {
@@ -417,7 +417,7 @@ sub install_autoload {
                 "unshift(\@_, '$where', '$k', [$id_list]); " .
                 "goto &Qt::_internal::go}\n";
         }
-        DEBUG autoload => "installing $code ";
+        DEBUG autoload_verbose => "installing $code ";
         eval($code);
         die $@ if($@); # TODO die with line numbers on $code
     }
@@ -426,6 +426,7 @@ sub install_autoload {
 sub resolver {
     my $class = shift;
     my $method = shift;
+    my $id_list = shift;
 
     my $class_id = find_class_id($class);
     my ($id, $what) = getSmokeMethodId(@_,
@@ -445,10 +446,10 @@ sub go {
 
     $self = shift(@_) if($method =~ s/^\+//); # XXX silly workaround
 
-    DEBUG calls => "candidates: ", join(", ", @$id_list);
+    DEBUG calls => "$method candidates: ", join(", ", @$id_list);
     # TODO check a single id's signature though
     my $id = @$id_list > 1 ?
-        resolver($class, $method, @_) : $id_list->[0];
+        resolver($class, $method, $id_list, @_) : $id_list->[0];
 
     unshift(@_, $id, $self);
     DEBUG calls => "call $class\::$method() as ",
@@ -457,6 +458,7 @@ sub go {
 }
 
 # replace c++ package_classId() function
+# Depth-first search of @ISA for a core package.
 sub find_class_id {
     my ($package) = @_;
 
@@ -483,6 +485,9 @@ sub getSmokeMethodId {
     my $methodname = pop;
     my $classId = pop;
 
+    DEBUG calls =>
+        "getSmokeMethodId(..., $classname, $methodname, $classId)\n";
+
     # Loop over the arguments to determine the type of args
     my @mungedMethods = ( $methodname );
     foreach my $arg ( @_ ) {
@@ -497,7 +502,7 @@ sub getSmokeMethodId {
             @mungedMethods = map { $_ . '$' } @mungedMethods;
         }
     }
-    DEBUG calls => "lookup $classname @mungedMethods";
+    DEBUG calls_verbose => "lookup $classname @mungedMethods";
     my @methodIds = map { findMethod( $classname, $_ ) } @mungedMethods;
 
     my $cacheLookup = 1;
@@ -936,6 +941,8 @@ sub normalize_classname {
 
 sub objmatch {
     my ( $methodname, $args ) = @_;
+
+    DEBUG calls => "running objmatch on $methodname()";
     foreach my $i ( 0..$#$args ) {
         # Compare our actual args to what the method expects
         my $argtype = getSVt($$args[$i]);
