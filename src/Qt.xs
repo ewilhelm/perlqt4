@@ -410,17 +410,18 @@ BOOT:
 
     newXS("Qt::qVariantFromValue", XS_qvariant_from_value, __FILE__);
     newXS("Qt::qVariantValue", XS_qvariant_value, __FILE__);
-    newXS(" Qt::Object::findChildren", XS_find_qobject_children, __FILE__);
     newXS("Qt::Object::findChildren", XS_find_qobject_children, __FILE__);
     newXS("Qt::Object::qobject_cast", XS_qobject_qt_metacast, __FILE__);
-    newXS(" Qt::AbstractItemModel::rowCount", XS_qabstract_item_model_rowcount, __FILE__);
-    newXS(" Qt::AbstractItemModel::columnCount", XS_qabstract_item_model_columncount, __FILE__);
-    newXS(" Qt::AbstractItemModel::data", XS_qabstract_item_model_data, __FILE__);
-    newXS(" Qt::AbstractItemModel::setData", XS_qabstract_item_model_setdata, __FILE__);
-    newXS(" Qt::AbstractItemModel::rowCount", XS_qabstract_item_model_rowcount, __FILE__);
-    newXS(" Qt::AbstractItemModel::insertRows", XS_qabstract_item_model_insertrows, __FILE__);
-    newXS(" Qt::AbstractItemModel::insertColumns", XS_qabstract_item_model_insertcolumns, __FILE__);
-    newXS(" Qt::AbstractItemModel::removeRows", XS_qabstract_item_model_removerows, __FILE__);
-    newXS(" Qt::AbstractItemModel::removeColumns", XS_qabstract_item_model_removecolumns, __FILE__);
+
     newXS("Qt::AbstractItemModel::createIndex", XS_qabstractitemmodel_createindex, __FILE__);
-    newXS(" Qt::ModelIndex::internalPointer", XS_qmodelindex_internalpointer, __FILE__);
+    // XXX should these be installed in a proper package or deleted?
+    // newXS(" Qt::AbstractItemModel::rowCount", XS_qabstract_item_model_rowcount, __FILE__);
+    // newXS(" Qt::AbstractItemModel::columnCount", XS_qabstract_item_model_columncount, __FILE__);
+    // newXS(" Qt::AbstractItemModel::data", XS_qabstract_item_model_data, __FILE__);
+    // newXS(" Qt::AbstractItemModel::setData", XS_qabstract_item_model_setdata, __FILE__);
+    // newXS(" Qt::AbstractItemModel::rowCount", XS_qabstract_item_model_rowcount, __FILE__);
+    // newXS(" Qt::AbstractItemModel::insertRows", XS_qabstract_item_model_insertrows, __FILE__);
+    // newXS(" Qt::AbstractItemModel::insertColumns", XS_qabstract_item_model_insertcolumns, __FILE__);
+    // newXS(" Qt::AbstractItemModel::removeRows", XS_qabstract_item_model_removerows, __FILE__);
+    // newXS(" Qt::AbstractItemModel::removeColumns", XS_qabstract_item_model_removecolumns, __FILE__);
+    // newXS(" Qt::ModelIndex::internalPointer", XS_qmodelindex_internalpointer, __FILE__);
