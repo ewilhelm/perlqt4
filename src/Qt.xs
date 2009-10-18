@@ -257,7 +257,7 @@ call_smoke(methodid, object, ...)
         // MethodCall tries to write into the stack, so we have to copy it
         SV ** mystack = new SV*[items];
         for(int i = 0; i < items; i++)
-          mystack[i] = sv_mortalcopy(ST(wasitems-items+i));
+          mystack[i] = ST(wasitems-items+i);
 
         if(!qt_Smoke->methods[methodid].flags & Smoke::mf_static) {
           if(!call_this->smoke) croak("not a static function");
