@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+my $ex = pop(@ARGV);
+-e $ex or die "cannot run $ex - no such file";
+
+(my $dir = $ex) =~ s{/[^/]+$}{};
+
+exec($^X, '-Ilib','-Iblib/arch', '-I'.$dir, @ARGV, $ex);
+
+
+# vim:ts=2:sw=2:et:sta

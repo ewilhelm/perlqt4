@@ -6,8 +6,8 @@ use warnings;
 use Qt;
 
 sub main {
-    my $app = Qt::Application(\@ARGV);
-    my $hello = Qt::PushButton("Hello world!");
+    my $app = Qt::Application->new(\@ARGV);
+    my $hello = Qt::PushButton->new("Hello world!");
     $hello->show();
     exit $app->exec();
 }
