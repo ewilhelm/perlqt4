@@ -18,8 +18,6 @@ our %channel = (
   slots     => 0x80,
   marshall  => 0x100,
   meta      => 0x200,
-
-  all       => 0xffff
 );
 
 sub dumpMetaMethods {
@@ -66,21 +64,22 @@ sub import {
 
   require Qt;
 
-  my $db = (@_)? 0x0000 : (0x01|0x80);
-  my $usage = 0;
-  for my $ch(@_) {
+  my $db = 0;
+  for my $ch (@_) {
     if(exists $channel{$ch}) {
       $db |= $channel{$ch};
     }
+    elsif($ch eq 'all') {
+      $db |= $channel{$_} for(grep({$_ ne 'verbose'} keys %channel));
+    }
     else {
-      warn "Unknown debugging channel: $ch\n";
-      $usage++;
+      croak("Unknown debugging channel: $ch\n",
+        "Available channels: \n\t",
+        join("\n\t", sort(keys %channel), 'all'), "\n"
+      );
     }
   }
   Qt::_internal::setDebug($db);    
-  print "Available channels: \n\t".
-    join("\n\t", sort keys %channel).
-    "\n" if $usage;
 }
 
 sub unimport {
