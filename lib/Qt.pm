@@ -93,6 +93,7 @@ use strict;
 use warnings;
 
 use Qt::debug;
+use Carp;
 
 use List::MoreUtils qw(uniq);
 
@@ -133,156 +134,20 @@ my %hashTypes = (
     },
 );
 
-sub argmatch {
-    my ( $methodIds, $args, $argNum ) = @_;
-    my %match;
-
-    my $argType = getSVt( $args->[$argNum] );
-
-    my $explicitType = 0;
-               #index into methodId array
-    foreach my $methodIdIdx ( 0..$#{$methodIds} ) {
-        my $methodId = $methodIds->[$methodIdIdx];
-        my $typeName = getTypeNameOfArg( $methodId, $argNum );
-        # warn "check $typeName vs $argType ($args->[$argNum])\n";
-        #ints and bools
-        if ( $argType eq 'i' ) {
-            if( $typeName =~ m/^(?:bool|(?:(?:un)?signed )?(?:int|long)|uint)[*&]?$/ ) {
-                $match{$methodId} = [0,$methodIdIdx];
-            }
-        }
-        # floats and doubles
-        elsif ( $argType eq 'n' ) {
-            if( $typeName =~ m/^(?:float|double)$/ ) {
-                $match{$methodId} = [0,$methodIdIdx];
-            }
-        }
-        # enums
-        elsif ( $argType eq 'e' ) {
-            my $refName = ref $args->[$argNum];
-            if( $typeName =~ m/^$refName[s]?$/ ) {
-                $match{$methodId} = [0,$methodIdIdx];
-            }
-        }
-        # strings
-        elsif ( $argType eq 's' ) {
-            if( $typeName =~ m/^(?:(?:const )?u?char\*|(?:const )?(?:(QString)|QByteArray)[\*&]?)$/ ) {
-                $match{$methodId} = [0,$methodIdIdx];
-            }
-        }
-        # arrays
-        elsif ( $argType eq 'a' ) {
-            next unless defined $arrayTypes{$typeName};
-            my @subArgTypes = uniq( map{ getSVt( $_ ) } @{$args->[$argNum]} );
-            my @validTypes = @{$arrayTypes{$typeName}->{value}};
-            my $good = 1;
-            foreach my $subArgType ( @subArgTypes ) {
-                if ( !grep{ $_ eq $subArgType } @validTypes ) {
-                    $good = 0;
-                    last;
-                }
-            }
-            if( $good ) {
-                $match{$methodId} = [0,$methodIdIdx];
-            }
-        }
-        elsif ( $argType eq 'r' or $argType eq 'U' ) {
-            $match{$methodId} = [0,$methodIdIdx];
-        }
-        elsif ( $argType eq 'Qt::String' ) {
-            # This type exists only to resolve ambiguous method calls, so we
-            # can return here.
-            if( $typeName =~m/^(?:const )?QString[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::CString' ) {
-            # This type exists only to resolve ambiguous method calls, so we
-            # can return here.
-            if( $typeName =~m/^(?:const )?char ?\*[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Int' ) {
-            # This type exists only to resolve ambiguous method calls, so we
-            # can return here.
-            if( $typeName =~ m/^int[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Uint' ) {
-            # This type exists only to resolve ambiguous method calls, so we
-            # can return here.
-            if( $typeName =~ m/^unsigned int[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Bool' ) {
-            # This type exists only to resolve ambiguous method calls, so we
-            # can return here.
-            if( $typeName eq 'bool' ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Short' ) {
-            if( $typeName =~ m/^short[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Ushort' ) {
-            if( $typeName =~ m/^unsigned short[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        elsif ( $argType eq 'Qt::Uchar' ) {
-            if( $typeName =~ m/^u(?=nsigned )?char[\*&]?$/ ) {
-                return $methodId;
-            }
-            else {
-                $explicitType = 1;
-            }
-        }
-        # objects
-        else {
-            # Optional const, some words, optional & or *.  Note ?: does not
-            # make a backreference, (\w*) is the only thing actually captured.
-            $typeName =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/g;
-            my $isa = classIsa( $argType, $typeName );
-            if ( $isa != -1 ) {
-                $match{$methodId} = [-$isa, $methodIdIdx];
-            }
-        }
-    }
-
-    if ( !%match && $explicitType ) {
-        warn "no match";
-        return -1;
-    }
-
-    # warn "matched ", scalar(keys %match), " possibilities\n";
-    return sort { $match{$b}[0] <=> $match{$a}[0] or $match{$a}[1] <=> $match{$b}[1] } keys %match;
-}
+my %matchers = (
+  i => qr/^(?:bool|(?:(?:un)?signed )?(?:int|long)|uint|uchar)[*&]?$/,
+  n => qr/^(?:float|double)$/,
+  # TODO something about the enum
+  s => qr/^(?:const )?(?:u?char|(?:QString|QByteArray))[\*&]?$/,
+  'Qt::String'  => qr/^(?:const )?QString[\*&]?$/,
+  'Qt::CString' => qr/^(?:const )?char ?\*[\*&]?$/,
+  'Qt::Int'     => qr/^int[\*&]?$/,
+  'Qt::Uint'    => qr/^unsigned int[\*&]?$/,
+  'Qt::Bool'    => 'bool',
+  'Qt::Short'   => qr/^short[\*&]?$/,
+  'Qt::Ushort'  => qr/^unsigned short[\*&]?$/,
+  'Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
+);
 
 sub dumpArgs {
     return join ', ', map{
@@ -423,15 +288,65 @@ sub install_autoload {
 } # end closure
 
 sub resolver {
-    my $class = shift;
-    my $method = shift;
-    my $id_list = shift;
+  my ($ids, $ptypes) = @_;
 
-    my $class_id = find_class_id($class);
-    my ($id, $what) = getSmokeMethodId(@_,
-        $class_id, $method, $classId2class{$class_id}
-    );
-    return($id);
+  my @found;
+  foreach my $id (@$ids) {
+    my @qtypes = get_arg_types($id);
+    next if(@qtypes != @$ptypes);
+
+    DEBUG verbose_calls =>
+      "check (", join(",", @$ptypes),
+      ") against (", join(",", @qtypes), ")\n";
+    my $ok = 0;
+    foreach my $i (0..$#$ptypes) {
+      my $p = $ptypes->[$i];
+      my $q = $qtypes[$i];
+      if(my $m = $matchers{$p}) {
+        $q =~ m/$m/ or last;
+        DEBUG verbose_calls => "  $p is $q\n";
+      }
+      elsif($p eq 'a') {
+        if($q =~ m/char\*\*/) {
+          DEBUG verbose_calls => "  $p is $q\n";
+        }
+        else {
+          my $at = $arrayTypes{$q} or last;
+          # XXX validating against content won't make sense unless we do
+          # it against the cache match too.
+          DEBUG verbose_calls => "  array is maybe $q\n";
+          # my @subt = uniq( map{ getSVt( $_ ) } @{$args->[$argNum]} );
+          # my @valid = @{$at->{value}};
+          # my $good = 1;
+          # foreach my $s (@subt) {
+          #   if(!grep{ $_ eq $s } @valid) {
+          #     $good = 0;
+          #     last;
+          #   }
+          # }
+          # if($good) {
+          #     $match{$methodId} = [0,$methodIdIdx];
+          # }
+        }
+      }
+      elsif($p eq 'r' or $p eq 'U' or $p eq 'u') {
+      }
+      else {
+        # must be an object
+        $q =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/g;
+        DEBUG verbose_calls => "check $p isa $q\n";
+        # $p->isa($q) or last;
+        classIsa($p, $q) >= 0 or last;
+      }
+
+      $ok++;
+    }
+    push(@found, $id) if($ok == @$ptypes);
+  }
+  @found or croak("cannot find matching signature");
+  return($found[0]) if(@found == 1);
+  carp("too many matching signatures: @found\n");
+  return($found[0]);
 }
 
 sub go {
@@ -446,157 +361,15 @@ sub go {
     $self = shift(@_) if($method =~ s/^\+//); # XXX silly workaround
 
     DEBUG calls => "$method candidates: ", join(", ", @$id_list);
-    # TODO check a single id's signature though
-    my $id = @$id_list > 1 ?
-        resolver($class, $method, $id_list, @_) : $id_list->[0];
+
+    my @ptypes = map({getSVt($_)} @_);
+    my $id = $#$id_list ? resolver($id_list, \@ptypes) : $id_list->[0];
+    # TODO still need to check one id, plus cache stuff
 
     unshift(@_, $id, $self);
     DEBUG calls => "call $class\::$method() as ",
         join(',', map({defined($_) ? $_ : '*undef*'} @_));
     goto &call_smoke;
-}
-
-# replace c++ package_classId() function
-# Depth-first search of @ISA for a core package.
-sub find_class_id {
-    my ($package) = @_;
-
-    return $package2classId{$package}
-        if(exists $package2classId{$package});
-
-    my $isa = $A->($package . '::ISA');
-    foreach my $entry (@$isa) {
-        my @got = find_class_id($entry);
-        return($got[0]) if(@got);
-    }
-    return();
-}
-
-# Args: @_: the args to the method being called
-#       $classname: the c++ class being called
-#       $methodname: the c++ method name being called
-#       $classId: the smoke class Id of $classname
-# Returns: A disambiguated method id
-# Desc: Examines the arguments of the method call to build a method signature.
-#       From that signature, it determines the appropriate method id.
-sub getSmokeMethodId {
-    my $classname = pop;
-    my $methodname = pop;
-    my $classId = pop;
-
-    DEBUG calls =>
-        "getSmokeMethodId(..., $classname, $methodname, $classId)\n";
-
-    # Loop over the arguments to determine the type of args
-    my @mungedMethods = ( $methodname );
-    foreach my $arg ( @_ ) {
-        if (!defined $arg) {
-            # An undefined value requires a search for each type of argument
-            @mungedMethods = map { $_ . '#', $_ . '?', $_ . '$' } @mungedMethods;
-        } elsif(isObject($arg)) {
-            @mungedMethods = map { $_ . '#' } @mungedMethods;
-        } elsif((ref $arg) =~ m/HASH|ARRAY/) {
-            @mungedMethods = map { $_ . '?' } @mungedMethods;
-        } else {
-            @mungedMethods = map { $_ . '$' } @mungedMethods;
-        }
-    }
-    DEBUG calls_verbose => "lookup $classname @mungedMethods";
-    my @methodIds = map { findMethod( $classname, $_ ) } @mungedMethods;
-
-    my $cacheLookup = 1;
-
-    # If we didn't get any methodIds, look for alternatives, and try convert
-    # the arguments we have to the kind this method call wants
-    if (!@methodIds) {
-        my @altMethod = findAnyPossibleMethod( $classname, $methodname, @_ );
-
-        # Only try this if there's only one possible alternative
-        if ( @altMethod == 1 ) {
-            my $altMethod = $altMethod[0];
-            foreach my $argId ( 0..$#_ ) {
-                my $wantType = getTypeNameOfArg( $altMethod, $argId );
-                $wantType =~ s/^const\s+//;
-                $wantType =~ s/(?<=\w)[&*]$//g;
-                $wantType = normalize_classname( $wantType );
-                no strict qw( refs );
-                $_[$argId] = $wantType->( $_[$argId] );
-                use strict;
-            }
-            my( $methodId ) = getSmokeMethodId( @_, $classId, $methodname, $classname );
-            # Don't cache this lookup.
-            return $methodId, 0;
-        }
-    }
-
-    # If we got more than 1 method id, resolve it
-    if (@methodIds > 1) {
-        foreach my $argNum (0..$#_) {
-            my @matching = argmatch( \@methodIds, \@_, $argNum );
-            if (@matching) {
-                if ($matching[0] == -1) {
-                    @methodIds = ();
-                }
-                else {
-                    @methodIds = @matching;
-                }
-            }
-        }
-
-        # Look for the user-defined signature
-        if ( @methodIds > 1 && defined $ambiguousSignature ) {
-            foreach my $methodId ( @methodIds ) {
-                my ($signature) = dumpCandidates( $classname, $methodname, [$methodId] );
-                if ( $signature eq $ambiguousSignature ) {
-                    @methodIds = ($methodId);
-                    $ambiguousSignature = undef;
-                    last;
-                }
-            }
-        }
-
-        # If we still have more than 1 match, use the first one.
-        if ( @methodIds > 1 ) {
-            my $msg = "--- Ambiguous method ${classname}::$methodname";
-            $msg .= "Candidates are:\n\t";
-            $msg .= join "\n\t", dumpCandidates( $classname, $methodname, \@methodIds );
-            $msg .= "\nChoosing first one...\n";
-            die $msg;
-            @methodIds = $methodIds[0];
-
-            # Since a call to this same method with different args may resolve
-            # differently, don't cache this lookup
-            $cacheLookup = 0;
-        }
-    }
-    elsif ( @methodIds == 1 and @_ ) {
-        # We have one match and arguments.  We need to make sure our input
-        # arguments match what the method is expecting.  Clear methodIds if
-        # args don't match
-        if (!objmatch($methodIds[0], \@_)) {
-            my $errStr = '--- Arguments for method call ' .
-                "$classname\::$methodname did not match C++ method ".
-                "signature,";
-            $errStr .= "Method call was:\n\t";
-            $errStr .= "$classname\::$methodname( " . dumpArgs(@_) . " )\n";
-            $errStr .= "C++ signature is:\n\t";
-            $errStr .= (dumpCandidates( $classname, $methodname, \@methodIds ))[0] . "\n";
-            @methodIds = ();
-            print STDERR $errStr and die;
-        }
-    }
-
-    if ( !@methodIds ) {
-        @methodIds = findAnyPossibleMethod( $classname, $methodname, @_ );
-        if( @methodIds ) {
-            die reportAlternativeMethods( $classname, $methodname, \@methodIds, @_ );
-        }
-        else {
-            die reportNoMethodFound( $classname, $methodname, @_ );
-        }
-    }
-
-    return $methodIds[0], $cacheLookup;
 }
 
 sub getMetaObject {
