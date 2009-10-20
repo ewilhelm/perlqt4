@@ -147,7 +147,7 @@ my %matchers = (
   '_Qt::Ushort'  => qr/^unsigned short[\*&]?$/,
   '_Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
 );
-our %is_enum;
+my %is_enum;
 
 sub install_autoload {
     my ($where) = @_;
