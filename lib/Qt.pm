@@ -113,10 +113,10 @@ my %customClasses = (
     'Qt::DBusVariant' => 'Qt::Variant',
 );
 
-my %arrayTypes = (
-    'const QList<QVariant>&' => {
-        value => [ 'QVariant' ]
-    },
+my %array_types = (
+    # 'const QList<QVariant>&' => {
+    #     value => [ 'QVariant' ]
+    # },
     'const QStringList&' => {
         value => [ 's', 'Qt::String' ],
     },
@@ -134,20 +134,20 @@ my %hashTypes = (
 );
 
 my %matchers = (
-  i => qr/^(?:bool|(?:(?:un)?signed )?(?:int|long)|uint|uchar)[*&]?$/,
+  i => qr/^(?:bool|(?:(?:un)?signed )?(?:int|long)|uint|uchar|qreal)[*&]?$/,
   n => qr/^(?:float|double)$/,
   # TODO something about the enum
   s => qr/^(?:const )?(?:u?char|(?:QString|QByteArray))[\*&]?$/,
-  'Qt::String'  => qr/^(?:const )?QString[\*&]?$/,
-  'Qt::CString' => qr/^(?:const )?char ?\*[\*&]?$/,
-  'Qt::Int'     => qr/^int[\*&]?$/,
-  'Qt::Key'     => qr/^int[\*&]?$/,
-  'Qt::Uint'    => qr/^unsigned int[\*&]?$/,
-  'Qt::Bool'    => 'bool',
-  'Qt::Short'   => qr/^short[\*&]?$/,
-  'Qt::Ushort'  => qr/^unsigned short[\*&]?$/,
-  'Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
+  '_Qt::String'  => qr/^(?:const )?QString[\*&]?$/,
+  '_Qt::CString' => qr/^(?:const )?char ?\*[\*&]?$/,
+  '_Qt::Int'     => qr/^int[\*&]?$/,
+  '_Qt::Uint'    => qr/^unsigned int[\*&]?$/,
+  '_Qt::Bool'    => 'bool',
+  '_Qt::Short'   => qr/^short[\*&]?$/,
+  '_Qt::Ushort'  => qr/^unsigned short[\*&]?$/,
+  '_Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
 );
+our %is_enum;
 
 sub install_autoload {
     my ($where) = @_;
@@ -286,11 +286,17 @@ sub resolver {
       "check (", join(",", @$ptypes),
       ") against (", join(",", @qtypes), ")\n";
     my $ok = 0;
+    my $score = 0;
     foreach my $i (0..$#$ptypes) {
       my $p = $ptypes->[$i];
       my $q = $qtypes[$i];
       if(my $m = $matchers{$p}) {
         $q =~ m/$m/ or last;
+        DEBUG verbose_calls => "  $p is $q\n";
+      }
+      elsif($m = $matchers{"_$p"}) {
+        $q =~ m/$m/ or last;
+        $score += 10;
         DEBUG verbose_calls => "  $p is $q\n";
       }
       elsif($p eq 'a') {
@@ -301,7 +307,8 @@ sub resolver {
           DEBUG verbose_calls => "  just assume $p is $q\n";
         }
         else {
-          my $at = $arrayTypes{$q} or last;
+          my $at = $array_types{$q} or last;
+          $score++;
           # XXX validating against content won't make sense unless we do
           # it against the cache match too.
           DEBUG verbose_calls => "  array is maybe $q\n";
@@ -321,26 +328,34 @@ sub resolver {
       }
       elsif($p eq 'r' or $p eq 'u') {
       }
+      elsif($is_enum{$p}) {
+        last unless($q =~ m/$matchers{i}/ or
+          (($p eq $q or $p.'s' eq $q or $p->isa($q)) and ++$score)
+        );
+        DEBUG verbose_calls => "  $p is an enum ($q)\n";
+      }
       else {
         # must be an object
         $q =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/;
         DEBUG verbose_calls => "check $p isa $q\n";
         # XXX getSVt() and enum blessing need alignment
-        unless($p eq $q or $p.'s' eq $q) {
-            $q = normalize_classname($q);
-            last unless($p eq $q or $p->isa($q));
-        }
+        $q = normalize_classname($q);
+        last unless($p eq $q or $p->isa($q));
+        $score++;
         DEBUG verbose_calls => "  $p isa $q\n";
       }
 
       $ok++;
+      $score++;
     }
-    push(@found, $id) if($ok == @$ptypes);
+    push(@found, [$id, $score]) if($ok == @$ptypes);
   }
   @found or croak("cannot find matching signature");
-  return($found[0]) if(@found == 1);
-  carp("too many matching signatures: @found\n");
-  return($found[0]);
+  return($found[0][0]) if(@found == 1);
+  @found = sort({$b->[1] <=> $a->[1]} @found);
+  carp("too many matching signatures: @found\n")
+    if($found[0][1] == $found[1][1]);
+  return($found[0][0]);
 }
 
 sub go {
@@ -459,6 +474,7 @@ sub init {
     push @{$classes}, keys %customClasses;
     init_class($_) for(@$classes);
 
+    %is_enum = map({$_ => 1} @{getEnumList()});
     # my $enums = getEnumList();
     # foreach my $enumName (@$enums) {
     #     $enumName =~ s/^const //;
