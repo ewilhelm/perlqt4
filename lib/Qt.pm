@@ -149,31 +149,6 @@ my %matchers = (
   'Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
 );
 
-sub dumpArgs {
-    return join ', ', map{
-        my $refName = ref $_;
-        $refName =~ s/^ *//;
-        if($refName) {
-            $refName;
-        }
-        else {
-            $_;
-        }
-    } @_;
-}
-
-sub dumpCandidates {
-    my ($classname, $methodname, $ids) = @_;
-    my @methods;
-    foreach my $id (@$ids) {
-        my $method = "$id\: $classname\::$methodname( ";
-        $method .= join ', ', get_arg_types($id);
-        $method .= " )";
-        push @methods, $method;
-    }
-    return @methods;
-}
-
 my $HAS_METHOD = sub {
     my ($what) = @_;
     defined &{"$what"} and return(\&{"$what"});
@@ -441,23 +416,6 @@ sub getMetaObject {
     return $meta->{object};
 }
 
-# Does the method exist, but the user just gave bad args?
-sub findAnyPossibleMethod {
-    my $classname = shift;
-    my $methodname = shift;
-
-    my @last = '';
-    my @mungedMethods = ( $methodname );
-    # 14 is the max number of args, but that's way too many permutations.
-    # Keep it short.
-    foreach ( 0..7 ) { 
-        @last = permateMungedMethods( ['$', '?', '#'], @last );
-        push @mungedMethods, map{ $methodname . $_ } @last;
-    }
-
-    return map { findMethod( $classname, $_ ) } @mungedMethods;
-}
-
 sub init_class {
     my ($cxxClassName) = @_;
 
@@ -492,57 +450,6 @@ sub init_class {
     }
 
     install_autoload($perlClassName);
-
-    # Define overloaded operators
-    # @{$A->(" $perlClassName\::ISA")} = ('Qt::base::_overload');
-
-    # foreach my $sp ('', ' ') {
-    #     my $where = $sp . $perlClassName;
-    #     installautoload($where);
-    # }
-
-    # $ISUB->("$perlClassName\::NEW", sub {
-    #     # Removes $perlClassName from the front of @_
-    #     my $perlClassName = shift;
-
-    #     # If we have a cxx classname that's in some other namespace, like
-    #     # QTextEdit::ExtraSelection, remove the first bit.
-    #     $cxxClassName =~ s/.*://;
-    #     $Qt::AutoLoad::AUTOLOAD = "$perlClassName\::$cxxClassName";
-    #     my $autoload = \&{"$perlClassName\::AUTOLOAD"};
-    #     setThis( bless &$autoload, " $perlClassName" );
-    # }) unless(defined &{"$perlClassName\::NEW"});
-
-    # Make the constructor subroutine
-    # $ISUB->($perlClassName, sub {
-    #     # Adds $perlClassName to the front of @_
-    #     $perlClassName->new(@_);
-    # }) unless(defined &{$perlClassName});
-}
-
-sub permateMungedMethods {
-    my $sigils = shift;
-    my @output;
-    while( defined( my $input = shift ) ) {
-        push @output, map{ $input . $_ } @{$sigils};
-    }
-    return @output;
-}
-
-sub reportAlternativeMethods {
-    my $classname = shift;
-    my $methodname = shift;
-    my $methodIds = shift;
-    # @_ now equals the original argument array of the method call
-    my $errStr = '--- Arguments for method call ' .
-        "$classname\::$methodname did not match any known C++ method ".
-        "signature,";
-    $errStr .= "Method call was:\n\t";
-    $errStr .= "$classname\::$methodname( " . dumpArgs(@_) . " )" .
-        Carp::shortmess();
-    $errStr .= "Possible candidates:\n\t";
-    $errStr .= join( "\n\t", dumpCandidates( $classname, $methodname, $methodIds ) ) . "\n";
-    return $errStr;
 }
 
 sub reportNoMethodFound {
