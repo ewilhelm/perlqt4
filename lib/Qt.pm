@@ -16,6 +16,7 @@ sub DESTROY {}
 # perl subclasses.  Without it, the context would always be set to the base Qt
 # class.
 sub tr {
+    die "this doesn't actually work";
     my $context = ref Qt::this();
     $context =~ s/^ *//;
     if( !$context ) {
@@ -632,15 +633,8 @@ sub SLOT ($) { '1' . $_[0] }
 sub emit (@) { return pop @_ }
 sub CAST ($$) {
     my( $var, $class ) = @_;
-    if( ref $var ) {
-        if ( $class->isa( 'Qt::base' ) ) {
-            $class = " $class";
-        }
-        return bless( $var, $class );
-    }
-    else {
-        return bless( \$var, $class );
-    }
+    # XXX I suspect this is not even needed
+    return bless( ref($var) ? $var : \$var, $class );
 }
 
 sub import { goto &Exporter::import }
