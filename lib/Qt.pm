@@ -150,11 +150,6 @@ my %matchers = (
   'Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
 );
 
-my $HAS_METHOD = sub {
-    my ($what) = @_;
-    defined &{"$what"} and return(\&{"$what"});
-};
-
 sub install_autoload {
     my ($where) = @_;
 
@@ -175,17 +170,15 @@ sub install_autoload {
         DEBUG autoload => "autoloading $where for ($package) $method";
 
         populate_class($where);
-        if(my $sub = $HAS_METHOD->("$where\::$method")) {
+        if(my $sub = $where->can($method)) {
             goto $sub;
         }
-        elsif(my $autosub = $where->can('AUTOLOAD')) {
-            # TODO that's actually in parent
-            DEBUG autoload => "try parent autoload";
-            goto $autosub;
-        }
         else {
-            Carp::croak("Can't locate object method ".
-                qq{"$method" via package "$package"}
+            Carp::croak(
+                ref($_[0])
+                ? "Can't locate object method " .
+                    qq{"$method" via package "$package"}
+                : "Undefined subroutine &$package\::$method called"
             );
         }
     });
