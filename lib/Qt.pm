@@ -141,6 +141,7 @@ my %matchers = (
   'Qt::String'  => qr/^(?:const )?QString[\*&]?$/,
   'Qt::CString' => qr/^(?:const )?char ?\*[\*&]?$/,
   'Qt::Int'     => qr/^int[\*&]?$/,
+  'Qt::Key'     => qr/^int[\*&]?$/,
   'Qt::Uint'    => qr/^unsigned int[\*&]?$/,
   'Qt::Bool'    => 'bool',
   'Qt::Short'   => qr/^short[\*&]?$/,
@@ -295,6 +296,9 @@ sub resolver {
       elsif($p eq 'a') {
         if($q =~ m/char\*\*/) {
           DEBUG verbose_calls => "  $p is $q\n";
+        }
+        elsif($q =~ m/\bQList</) {
+          DEBUG verbose_calls => "  just assume $p is $q\n";
         }
         else {
           my $at = $arrayTypes{$q} or last;
