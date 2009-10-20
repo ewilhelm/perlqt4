@@ -452,17 +452,6 @@ sub init_class {
     install_autoload($perlClassName);
 }
 
-sub reportNoMethodFound {
-    my $classname = shift;
-    my $methodname = shift;
-    # @_ now equals the original argument array of the method call
-
-    my $errStr = '--- Error: Method does not exist or not provided by this ' .
-        "binding:\n";
-    $errStr .= "$classname\::$methodname(),\n";
-    return $errStr;
-}
-
 # Args: none
 # Returns: none
 # Desc: sets up each class
@@ -607,25 +596,6 @@ sub normalize_classname {
     }
 
     return $perlClassName;
-}
-
-sub objmatch {
-    my ($id, $args) = @_;
-
-    DEBUG calls => "running objmatch on $id";
-    my @ptypes = map({getSVt($_)} @$args);
-    my @ctypes = get_arg_types($id);
-    for my $i ( 0..$#ptypes ) {
-        next if length $ptypes[$i] == 1;
-
-        my $typename = $ctypes[$i] or last; # no?
-
-        $typename =~ s/^(?:const\s+)?(\w+)[&*]?$/$1/g;
-        DEBUG verbose_calls =>
-            "check classIsa $ptypes[$i] vs $typename ";
-        return 0 if classIsa($ptypes[$i], $typename) == -1;
-    }
-    return 1;
 }
 
 sub Qt::CoreApplication::new {
