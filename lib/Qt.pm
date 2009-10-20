@@ -337,6 +337,7 @@ sub resolver {
         DEBUG verbose_calls => "check $p isa $q\n";
         # $p->isa($q) or last;
         classIsa($p, $q) >= 0 or last;
+        DEBUG verbose_calls => "  $p isa $q\n";
       }
 
       $ok++;
@@ -759,6 +760,8 @@ sub CAST ($$) {
 sub import { goto &Exporter::import }
 
 sub setSignature {
+  # XXX cheating should not be necessary
+  die "setSignature() not supported";
     $Qt::_internal::ambiguousSignature = shift;
 }
 
