@@ -207,7 +207,7 @@ const char* get_SVt(SV* sv) {
                     }
                     else {
                         // All enums are blessed scalars.
-                        r = "e";
+                        r = classname;
                     }
                     break;
                 }
@@ -216,10 +216,11 @@ const char* get_SVt(SV* sv) {
             }
         }
         else
-            r = o->smoke->className(o->classId);
+            r = HvNAME(SvSTASH(SvRV(sv)));
     }
     else
-        r = "U";
+        // r = "U";
+        croak("how did we get to U?");
     return r;
 }
 

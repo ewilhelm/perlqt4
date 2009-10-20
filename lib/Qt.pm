@@ -317,14 +317,17 @@ sub resolver {
           # }
         }
       }
-      elsif($p eq 'r' or $p eq 'U' or $p eq 'u') {
+      elsif($p eq 'r' or $p eq 'u') {
       }
       else {
         # must be an object
         $q =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/g;
         DEBUG verbose_calls => "check $p isa $q\n";
-        # $p->isa($q) or last;
-        classIsa($p, $q) >= 0 or last;
+        # XXX getSVt() and enum blessing need alignment
+        unless($p eq $q or $p.'s' eq $q) {
+            $q = normalize_classname($q);
+            last unless($p eq $q or $p->isa($q));
+        }
         DEBUG verbose_calls => "  $p isa $q\n";
       }
 
