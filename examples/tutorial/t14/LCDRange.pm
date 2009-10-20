@@ -5,62 +5,70 @@ use warnings;
 use blib;
 
 use Qt;
-use Qt::isa qw(Qt::Widget);
+use parent qw(Qt::Widget);
 use Qt::slots setValue => ['int'],
               setRange => ['int', 'int'];
 use Qt::signals valueChanged => ['int'];
 
-sub NEW {
+sub new {
     my( $class, $parent, $text ) = @_;
-    $class->SUPER::NEW($parent);
+    my $self = $class->SUPER::new($parent);
 
-    init();
+    $self->init();
 
     if( $text ) {
-        setText($text);
+        $self->setText($text);
     }
+    return $self;
 }
 
 sub init {
-    my $lcd = Qt::LCDNumber(2);
+    my $self = shift;
+
+    my $lcd = Qt::LCDNumber->new(2);
     $lcd->setSegmentStyle(Qt::LCDNumber::Filled());
 
-    my $slider = Qt::Slider(Qt::Horizontal());
+    my $slider = Qt::Slider->new(Qt::Horizontal());
     $slider->setRange(0, 99);
     $slider->setValue(0);
-    my $label = Qt::Label();
+    my $label = Qt::Label->new();
 
     $label->setAlignment(Qt::AlignHCenter() | Qt::AlignTop());
     $label->setSizePolicy(Qt::SizePolicy::Preferred(), Qt::SizePolicy::Fixed());
 
-    this->connect($slider, SIGNAL "valueChanged(int)",
+    $self->connect($slider, SIGNAL "valueChanged(int)",
                   $lcd, SLOT "display(int)");
-    this->connect($slider, SIGNAL "valueChanged(int)",
-                  this, SIGNAL "valueChanged(int)");
+    $self->connect($slider, SIGNAL "valueChanged(int)",
+                  $self, SIGNAL "valueChanged(int)");
 
-    my $layout = Qt::VBoxLayout;
+    my $layout = Qt::VBoxLayout->new;
     $layout->addWidget($lcd);
     $layout->addWidget($slider);
     $layout->addWidget($label);
-    this->setLayout($layout);
+    $self->setLayout($layout);
 
-    this->setFocusProxy($slider);
+    $self->setFocusProxy($slider);
 
-    this->{slider} = $slider;
-    this->{label} = $label;
+    $self->{slider} = $slider;
+    $self->{label} = $label;
 }
 
 sub value {
-    return this->{slider}->value();
+    my $self = shift;
+    return $self->{slider}->value();
 }
 
 sub setValue {
+    my $self = shift;
     my ( $value ) = @_;
-    this->{slider}->setValue($value);
+
+    $self->{slider}->setValue($value);
 }
 
 sub setRange {
+    my $self = shift;
     my ( $minValue, $maxValue ) = @_;
+
     if (($minValue < 0) || ($maxValue > 99) || ($minValue > $maxValue)) {
         Qt::qWarning("LCDRange::setRange(%d, %d)\n" .
                      "\tRange must be 0..99\n" .
@@ -68,12 +76,14 @@ sub setRange {
                      $minValue, $maxValue);
         return;
     }
-    this->{slider}->setRange($minValue, $maxValue);
+    $self->{slider}->setRange($minValue, $maxValue);
 }
 
 sub setText {
+    my $self = shift;
     my ( $text ) = @_;
-    this->{label}->setText($text);
+
+    $self->{label}->setText($text);
 }
 
 1;

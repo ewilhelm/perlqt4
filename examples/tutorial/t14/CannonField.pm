@@ -7,7 +7,7 @@ use blib;
 use Math::Trig;
 
 use Qt;
-use Qt::isa qw(Qt::Widget);
+use parent qw(Qt::Widget);
 use Qt::slots setAngle    => ['int'],
               setForce    => ['int'],
               shoot       => [],
@@ -21,27 +21,30 @@ use Qt::signals hit          => [],
                 forceChanged => ['int'],
                 canShoot     => ['bool'];
 
-sub NEW {
-    shift->SUPER::NEW(@_);
+sub new {
+    my $self = shift->SUPER::new(@_);
 
-    this->{currentAngle} = 45;
-    this->{currentForce} = 0;
-    this->{timerCount} = 0;
-    my $autoShootTimer = Qt::Timer(this);
-    this->{autoShootTimer} = $autoShootTimer;
-    this->connect( $autoShootTimer, SIGNAL 'timeout()', this, SLOT 'moveShot()' );
-    this->{shootAngle} = 0;
-    this->{shootForce} = 0;
-    this->{target} = Qt::Point(0, 0);
-    this->{gameEnded} = 0;
-    this->{barrelPressed} = 0;
-    this->setPalette(Qt::Palette(Qt::Color(250,250,200)));
-    this->setAutoFillBackground(1);
-    this->{firstTime} = 1;
-    newTarget();
+    $self->{currentAngle} = 45;
+    $self->{currentForce} = 0;
+    $self->{timerCount} = 0;
+    my $autoShootTimer = Qt::Timer->new($self);
+    $self->{autoShootTimer} = $autoShootTimer;
+    $self->connect( $autoShootTimer, SIGNAL 'timeout()', $self, SLOT 'moveShot()' );
+    $self->{shootAngle} = 0;
+    $self->{shootForce} = 0;
+    $self->{target} = Qt::Point->new(0, 0);
+    $self->{gameEnded} = 0;
+    $self->{barrelPressed} = 0;
+    $self->setPalette(Qt::Palette->new(Qt::Color->new(250,250,200)));
+    $self->setAutoFillBackground(1);
+    $self->{firstTime} = 1;
+    $self->newTarget();
+
+    return $self;
 }
 
 sub setAngle {
+    my $self = shift;
     my ( $angle ) = @_;
     if ($angle < 5) {
         $angle = 5;
@@ -49,187 +52,205 @@ sub setAngle {
     if ($angle > 70) {
         $angle = 70;
     }
-    if (this->{currentAngle} == $angle) {
+    if ($self->{currentAngle} == $angle) {
         return;
     }
-    this->{currentAngle} = $angle;
-    this->update(this->cannonRect());
-    emit angleChanged( this->{currentAngle} );
+    $self->{currentAngle} = $angle;
+    $self->update($self->cannonRect());
+    $self->angleChanged( $self->{currentAngle} );
 }
 
 sub setForce {
+    my $self = shift;
     my ( $force ) = @_;
     if ($force < 0) {
         $force = 0;
     }
-    if (this->{currentForce} == $force) {
+    if ($self->{currentForce} == $force) {
         return;
     }
-    this->{currentForce} = $force;
-    emit forceChanged( this->{currentForce} );
+    $self->{currentForce} = $force;
+    $self->forceChanged( $self->{currentForce} );
 }
 
 sub shoot {
-    if (isShooting()) {
+    my $self = shift;
+    if ($self->isShooting()) {
         return;
     }
-    this->{timerCount} = 0;
-    this->{shootAngle} = this->{currentAngle};
-    this->{shootForce} = this->{currentForce};
-    this->{autoShootTimer}->start(5);
-    emit canShoot( 0 );
+    $self->{timerCount} = 0;
+    $self->{shootAngle} = $self->{currentAngle};
+    $self->{shootForce} = $self->{currentForce};
+    $self->{autoShootTimer}->start(5);
+    $self->canShoot( 0 );
 }
 
 sub newTarget {
-    if (this->{firstTime}) {
-        this->{firstTime} = 0;
+    my $self = shift;
+    if ($self->{firstTime}) {
+        $self->{firstTime} = 0;
+        # XXX this is ridiculous
         srand (time ^ $$ ^ unpack "%L*", `ps axww | gzip -f`);
     }
 
     # 2147483647 is the value of RAND_MAX, defined in stdlib.h, at least on my machine.
     # See the Qt 4.2 documentation on qrand() for more details.
-    this->{target} = Qt::Point( 150 + rand(2147483647) % 190, 10 + rand(2147483647) % 255);
-    this->update();
+    $self->{target} = Qt::Point->new( 150 + rand(2147483647) % 190, 10 + rand(2147483647) % 255);
+    $self->update();
 }
 
 sub setGameOver {
-    return if (this->{gameEnded});
-    if (this->isShooting()) {
-        this->{autoShootTimer}->stop();
+    my $self = shift;
+    return if ($self->{gameEnded});
+    if ($self->isShooting()) {
+        $self->{autoShootTimer}->stop();
     }
-    this->{gameEnded} = 1;
-    emit canShoot(0);
-    this->update();
+    $self->{gameEnded} = 1;
+    $self->canShoot(0);
+    $self->update();
 }
 
 sub restartGame {
-    if (isShooting()) {
-        this->{autoShootTimer}->stop();
+    my $self = shift;
+    if ($self->isShooting()) {
+        $self->{autoShootTimer}->stop();
     }
-    this->{gameEnded} = 0;
-    this->update();
-    emit canShoot( 1 );
+    $self->{gameEnded} = 0;
+    $self->update();
+    $self->canShoot( 1 );
 }
 
 sub moveShot {
-    my $region = shotRect();
-    this->{timerCount}++;
+    my $self = shift;
+    my $region = $self->shotRect();
+    $self->{timerCount}++;
 
-    my $shotR = shotRect();
+    my $shotR = $self->shotRect();
 
-    if ($shotR->intersects(targetRect())) {
-        this->{autoShootTimer}->stop();
-        emit canShoot( 1 );
-        emit hit();
+    if ($shotR->intersects($self->targetRect())) {
+        $self->{autoShootTimer}->stop();
+        $self->canShoot( 1 );
+        $self->hit();
     }
-    elsif ($shotR->x() > this->width() || $shotR->y() > this->height()
-           || $shotR->intersects(barrierRect())) {
-        this->{autoShootTimer}->stop();
-        emit canShoot( 1 );
-        emit missed();
+    elsif ($shotR->x() > $self->width() || $shotR->y() > $self->height()
+           || $shotR->intersects($self->barrierRect())) {
+        $self->{autoShootTimer}->stop();
+        $self->canShoot( 1 );
+        $self->missed();
     }
     else {
         $region = $region->unite($shotR);
     }
-    this->update($region);
+    $self->update($region);
 }
 
 sub mousePressEvent {
+    my $self = shift;
     my ( $event ) = @_;
     return if ${$event->button()} != ${Qt::LeftButton()};
-    if (this->barrelHit($event->pos())) {
-        this->{barrelPressed} = 1;
+    if ($self->barrelHit($event->pos())) {
+        $self->{barrelPressed} = 1;
     }
 }
 
 sub mouseMoveEvent {
+    my $self = shift;
     my ( $event ) = @_;
-    return if !this->{barrelPressed};
+    return unless($self->{barrelPressed});
     my $pos = $event->pos();
     if ($pos->x() <= 0) {
         $pos->setX(1);
     }
-    if ($pos->y() >= this->height()) {
-        $pos->setY(this->height() - 1);
+    if ($pos->y() >= $self->height()) {
+        $pos->setY($self->height() - 1);
     }
-    my $rad = atan((this->rect()->bottom() - $pos->y()) / $pos->x());
-    this->setAngle(int(($rad * 180 / 3.14159265) + .5) );
+    my $rad = atan(($self->rect()->bottom() - $pos->y()) / $pos->x());
+    $self->setAngle(int(($rad * 180 / 3.14159265) + .5) );
 }
 
 sub mouseReleaseEvent {
+    my $self = shift;
     my ( $event ) = @_;
     if (${$event->button()} == ${Qt::LeftButton()}){
-        this->{barrelPressed} = 0;
+        $self->{barrelPressed} = 0;
     }
 }
 
-my $barrelRect = Qt::Rect(30, -5, 20, 10);
+my $barrelRect = Qt::Rect->new(30, -5, 20, 10);
 
 sub paintEvent {
-    my $painter = Qt::Painter(this);
+    my $self = shift;
+    my $painter = Qt::Painter->new($self);
 
-    if (this->{gameEnded}) {
-        $painter->setPen(Qt::Color(Qt::black()));
-        $painter->setFont(Qt::Font("Courier", 48, Qt::Font::Bold()));
-        $painter->drawText(this->rect(), Qt::AlignCenter(), "Game Over");
+    if ($self->{gameEnded}) {
+        $painter->setPen(Qt::Color->new(Qt::black()));
+        $painter->setFont(Qt::Font->new("Courier", 48, Qt::Font::Bold()));
+        $painter->drawText($self->rect(), Qt::AlignCenter(), "Game Over");
     }
-    if (isShooting()){
-        paintShot($painter);
+    if ($self->isShooting()){
+        $self->paintShot($painter);
     }
-    if (!this->{gameEnded}) {
-        paintTarget($painter);
+    if (!$self->{gameEnded}) {
+        $self->paintTarget($painter);
     }
-    paintBarrier($painter);
-    paintCannon($painter);
+    $self->paintBarrier($painter);
+    $self->paintCannon($painter);
 
     $painter->end();
 }
 
 sub paintShot {
+    my $self = shift;
     my( $painter ) = @_;
     $painter->setPen(Qt::NoPen());
-    $painter->setBrush(Qt::Brush(Qt::black()));
-    $painter->drawRect(shotRect());
+    $painter->setBrush(Qt::Brush->new(Qt::black()));
+    $painter->drawRect($self->shotRect());
 }
 
 sub paintTarget {
+    my $self = shift;
     my( $painter ) = @_;
-    $painter->setPen(Qt::Color(Qt::black()));
-    $painter->setBrush(Qt::Brush(Qt::red()));
-    $painter->drawRect(targetRect());
+    $painter->setPen(Qt::Color->new(Qt::black()));
+    $painter->setBrush(Qt::Brush->new(Qt::red()));
+    $painter->drawRect($self->targetRect());
 }
 
 sub paintBarrier {
+    my $self = shift;
     my( $painter ) = @_;
-    $painter->setPen(Qt::Color(Qt::black()));
-    $painter->setBrush(Qt::Brush(Qt::yellow()));
-    $painter->drawRect(barrierRect());
+    $painter->setPen(Qt::Color->new(Qt::black()));
+    $painter->setBrush(Qt::Brush->new(Qt::yellow()));
+    $painter->drawRect($self->barrierRect());
 }
 
 sub paintCannon {
+    my $self = shift;
     my( $painter ) = @_;
     $painter->setPen(Qt::NoPen());
-    $painter->setBrush(Qt::Brush(Qt::blue()));
+    $painter->setBrush(Qt::Brush->new(Qt::blue()));
 
     $painter->save();
-    $painter->translate(0, this->rect()->height());
-    $painter->drawPie(Qt::Rect(-35, -35, 70, 70), 0, 90 * 16);
-    $painter->rotate(-(this->{currentAngle}));
+    $painter->translate(0, $self->rect()->height());
+    $painter->drawPie(Qt::Rect->new(-35, -35, 70, 70), 0, 90 * 16);
+    $painter->rotate(-($self->{currentAngle}));
     $painter->drawRect($barrelRect);
     $painter->restore();
 }
 
 sub cannonRect {
-    my $result = Qt::Rect(0, 0, 50, 50);
-    $result->moveBottomLeft(this->rect()->bottomLeft());
+    my $self = shift;
+    my $result = Qt::Rect->new(0, 0, 50, 50);
+    $result->moveBottomLeft($self->rect()->bottomLeft());
     return $result;
 }
 
 sub shotRect {
+    my $self = shift;
+
     my $gravity = 4;
-    my $time = this->{timerCount} / 20.0;
-    my $velocity = this->{shootForce};
-    my $radians = this->{shootAngle} * 3.14159265 / 180;
+    my $time = $self->{timerCount} / 20.0;
+    my $velocity = $self->{shootForce};
+    my $radians = $self->{shootAngle} * 3.14159265 / 180;
 
     my $velx = $velocity * cos($radians);
     my $vely = $velocity * sin($radians);
@@ -242,37 +263,45 @@ sub shotRect {
     $x = int($x + .5);
     $y = int($y + .5);
 
-    my $result = Qt::Rect(0, 0, 6, 6);
-    $result->moveCenter(Qt::Point( $x, this->height() - 1 - $y ));
+    my $result = Qt::Rect->new(0, 0, 6, 6);
+    $result->moveCenter(Qt::Point->new( $x, $self->height() - 1 - $y ));
     return $result;
 }
 
 sub targetRect {
-    my $result = Qt::Rect(0, 0, 20, 10);
-    my $target = this->{target};
-    $result->moveCenter(Qt::Point($target->x(), this->height() - 1 - $target->y()));
+    my $self = shift;
+
+    my $result = Qt::Rect->new(0, 0, 20, 10);
+    $self or die "where did my self go?";
+    my $target = $self->{target} or die "where did my target go?";
+    $result->moveCenter(Qt::Point->new($target->x(), $self->height() - 1 - $target->y()));
     return $result;
 }
 
 sub barrierRect {
-    return Qt::Rect(145, this->height() - 100, 15, 99);
+    my $self = shift;
+
+    return Qt::Rect->new(145, $self->height() - 100, 15, 99);
 }
 
 sub barrelHit {
+    my $self = shift;
+
     my ( $pos ) = @_;
-    my $matrix = Qt::Matrix;
-    $matrix->translate(0, this->height());
-    $matrix->rotate(-(this->{currentAngle}));
+    my $matrix = Qt::Matrix->new;
+    $matrix->translate(0, $self->height());
+    $matrix->rotate(-($self->{currentAngle}));
     $matrix = $matrix->inverted();
     return $barrelRect->contains($matrix->map($pos));
 }
 
 sub isShooting {
-    return this->{autoShootTimer}->isActive();
+    my $self = shift;
+    return $self->{autoShootTimer}->isActive();
 }
 
 sub sizeHint {
-    return Qt::Size(400, 300);
+    return Qt::Size->new(400, 300);
 }
 
 1;
