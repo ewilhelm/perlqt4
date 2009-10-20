@@ -113,8 +113,6 @@ my %customClasses = (
     'Qt::DBusVariant' => 'Qt::Variant',
 );
 
-our $ambiguousSignature = undef;
-
 my %arrayTypes = (
     'const QList<QVariant>&' => {
         value => [ 'QVariant' ]
@@ -321,7 +319,7 @@ sub resolver {
       }
       else {
         # must be an object
-        $q =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/g;
+        $q =~ s/^(?:const\s+)?(\w*)[&*]?$/$1/;
         DEBUG verbose_calls => "check $p isa $q\n";
         # XXX getSVt() and enum blessing need alignment
         unless($p eq $q or $p.'s' eq $q) {
@@ -638,7 +636,7 @@ sub import { goto &Exporter::import }
 sub setSignature {
   # XXX cheating should not be necessary
   die "setSignature() not supported";
-    $Qt::_internal::ambiguousSignature = shift;
+  # $Qt::_internal::ambiguousSignature = shift;
 }
 
 {my $qapp; sub setQApp {$qapp = shift;} sub qApp () {$qapp}}
