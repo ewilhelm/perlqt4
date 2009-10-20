@@ -1,4 +1,4 @@
-use Test::More tests => 23;
+use Test::More tests => 24;
 
 use Devel::Peek ();
 
@@ -72,7 +72,7 @@ my $app = Qt::Application->new( \@ARGV );
 }
 
 TODO: {
-    todo_skip("alignment flags", 1);
+    todo_skip("enum overloading", 1);
 
     # Test unsigned int marshalling
     my $label = Qt::Label->new();
@@ -171,16 +171,9 @@ TODO: {
                'marshall_ValueListItem<> FromSV' );
 }
 
-TODO: {
-    todo_skip("prepopulated isa is broken", 1);
+{
 
-    # XXX the class's @ISA needs to be set *after* autoload gets called
-    # the first time because otherwise perl will pass it over in favor of
-    # a sub that's already installed in a parent class.
-
-    warn "tableview?";
     my $tree = Qt::TableView->new( undef );
-    warn "tree?";
     my $model = Qt::DirModel->new();
 
     $tree->setModel( $model );
@@ -188,23 +181,23 @@ TODO: {
     $tree->setRootIndex( $top );
 
     my $selectionModel = $tree->selectionModel();
-    my $child0 = $top->child(0,0);
-    my $child1 = $top->child(0,1);
-    my $child2 = $top->child(0,2);
-    my $child3 = $top->child(0,3);
-    $selectionModel->select( $child0, Qt::ItemSelectionModel::Select() );
-    $selectionModel->select( $child1, Qt::ItemSelectionModel::Select() );
-    $selectionModel->select( $child2, Qt::ItemSelectionModel::Select() );
-    $selectionModel->select( $child3, Qt::ItemSelectionModel::Select() );
+    my @child = map({$top->child(0,$_)} 0..3);
+    $selectionModel->select( $child[0], Qt::ItemSelectionModel::Select() );
+    $selectionModel->select( $child[1], Qt::ItemSelectionModel::Select() );
+    $selectionModel->select( $child[2], Qt::ItemSelectionModel::Select() );
+    $selectionModel->select( $child[3], Qt::ItemSelectionModel::Select() );
 
     my $selection = $selectionModel->selection();
     my $indexes = $selection->indexes();
+    is($#$indexes, $#child, "index length");
 
+    TODO: { local $TODO = "marshall lists";
     # Run $indexes->[0] == $child0, which should return '1', for each returned
     # index.
-    is_deeply( [ map{ eval "\$indexes->[$_] == \$child$_" } (0..$#{$indexes}) ],
-               [ map{ 1 } (0..$#{$indexes}) ],
+    is_deeply( [ map{ eval {$indexes->[$_] == $child[$_]} } (0..$#child) ],
+               [ map{ 1 } (0..$#child) ],
                'marshall_ValueListItem<> ToSV' );
+    }
 }
 
 TODO: {

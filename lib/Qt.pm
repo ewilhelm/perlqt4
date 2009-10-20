@@ -187,12 +187,17 @@ sub install_autoload {
 
     # TODO install a can() too
 
+    $ISUB->("$where\::isa", sub {
+        my ($package, $what) = @_;
+        no strict 'refs';
+        local *{"$where\::ISA"} = \@{"$where\::isa"};
+        $package->SUPER::isa($what);
+    });
     $ISUB->("$where\::AUTOLOAD", sub {
         (my $method = $AUTOLOAD) =~ s/(.*):://;
         my $package = $1;
         DEBUG autoload => "autoloading $where for ($package) $method";
 
-        { no strict 'refs'; delete ${"$where\::"}{AUTOLOAD}; }
         populate_class($where);
         if(my $sub = $HAS_METHOD->("$where\::$method")) {
             goto $sub;
@@ -251,6 +256,20 @@ sub install_autoload {
     }
     sub populate_class {
         my ($where) = @_;
+
+        my @isa = @{$A->("$where\::isa")};
+        # and populate our parents
+        for(@isa) { populate_class($_) if(defined &{"$_\::AUTOLOAD"}) }
+        # finally install our ISA array
+        @{$A->("$where\::ISA")} = @isa;
+
+        {
+          no strict 'refs';
+          delete ${"$where\::"}{AUTOLOAD};
+          undef @{$A->("$where\::isa")}; # just for kicks
+          delete ${"$where\::"}{isa};
+        }
+
 
         my $id = $package2classId{$where};
         die "cannot populate $where - no id" unless(defined $id);
@@ -461,10 +480,11 @@ sub init_class {
         $super = normalize_classname($super);
     }
 
-    # The root of the tree will be Qt::base, so a call to
-    # $className::new() redirects there.
+    # The root of the tree will be Qt::base
     @isa = ('Qt::base') unless @isa;
-    @{$A->($perlClassName.'::ISA')} =  @isa;
+
+    # Defer actual ISA install until populate_class()
+    @{$A->($perlClassName.'::isa')} = @isa;
 
     { # pretend we loaded a .pm file
         (my $pm = $perlClassName . '.pm') =~ s{::}{/}g;
