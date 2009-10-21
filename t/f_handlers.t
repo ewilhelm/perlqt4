@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 27;
 
 use Devel::Peek ();
 
@@ -71,9 +71,7 @@ my $app = Qt::Application->new( \@ARGV );
          'int*' );
 }
 
-TODO: {
-    todo_skip("enum overloading", 1);
-
+{
     # Test unsigned int marshalling
     my $label = Qt::Label->new();
     my $hcenter = ${Qt::AlignHCenter()};
@@ -145,25 +143,26 @@ TODO: {
     is_deeply( $strings, $newStrings, 'Ambiguous list resolution' );
 }
 
-TODO: {
-    todo_skip("Qt::Key* junk", 1);
-
+{
     # Test marshall_ValueListItem ToSV
-    Qt::setSignature( 'QKeySequence::QKeySequence( int )' );
-    my $shortcut2 = Qt::KeySequence->new( Qt::Key_Tab() );
-    # XXX this is unambiguous the first time?
-    warn "what ? ", Qt::Key_Enter(), ",", Qt::Key_Tab();
     my $shortcut1 = Qt::KeySequence->new( Qt::Key_Enter() );
+    my $shortcut2 = Qt::KeySequence->new( Qt::Key_Tab() );
 
     my $shortcuts = [ $shortcut1, $shortcut2 ];
     my $action = Qt::Action->new( 'Foobar', undef );
 
     $action->setShortcuts( $shortcuts );
-    my $gotshortcuts = $action->shortcuts();
+    my $got = $action->shortcuts();
+    ok($got, "got shortcuts");
+    is(ref($got), 'ARRAY', "ARRAY ref");
+    is(scalar(@$got), scalar(@$shortcuts), 'count');
 
-    is_deeply( [ map{ eval "\$shortcuts->[$_] == \$gotshortcuts->[$_]" } (0..$#{$shortcuts}) ],
-               [ map{ 1 } (0..$#{$shortcuts}) ],
-               'marshall_ValueListItem<> FromSV' );
+    TODO: { local $TODO = 'KeySequence operators';
+    is_deeply(
+      [ map{ $shortcuts->[$_] == $got->[$_] } (0..$#$shortcuts) ],
+      [ map{ 1 } (0..$#{$shortcuts}) ],
+      'marshall_ValueListItem<> FromSV' );
+    }
 }
 
 {
@@ -186,10 +185,8 @@ TODO: {
     my $indexes = $selection->indexes();
     is($#$indexes, $#child, "index length");
 
-    TODO: { local $TODO = "marshall lists";
-    # Run $indexes->[0] == $child0, which should return '1', for each returned
-    # index.
-    is_deeply( [ map{ eval {$indexes->[$_] == $child[$_]} } (0..$#child) ],
+    TODO: { local $TODO = "ModelIndex operators";
+    is_deeply( [ map{ $indexes->[$_] == $child[$_] } (0..$#child) ],
                [ map{ 1 } (0..$#child) ],
                'marshall_ValueListItem<> ToSV' );
     }

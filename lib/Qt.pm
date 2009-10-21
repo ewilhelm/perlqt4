@@ -25,6 +25,55 @@ sub tr {
     return Qt::qApp()->translate( $context, @_ );
 }
 
+package Qt::enum::_overload;
+
+use strict;
+use warnings;
+
+use overload (
+  'fallback' => 1,
+  '==' => sub { my ($l, $r) = @_; $$l == (ref $r ? $$r : $r)},
+  '!=' => sub { my ($l, $r) = @_; $$l != (ref $r ? $$r : $r)},
+  '>>' => sub { my ($l, $r, $s) = @_; bless(\ (
+    $s ? (ref $r ? $$r : $r) >> $$l : $$l >> (ref $r ? $$r : $r)
+    ), ref $l);
+  },
+  '<<' => sub { my ($l, $r, $s) = @_; bless(\ (
+    $s ? (ref $r ? $$r : $r) << $$l : $$l << (ref $r ? $$r : $r)
+    ), ref $l);
+  },
+  '<' => sub { my ($l, $r, $s) = @_; 
+    $s ? (ref $r ? $$r : $r) < $$l : $$l < (ref $r ? $$r : $r)},
+  '<=' => sub { my ($l, $r, $s) = @_; 
+    $s ? (ref $r ? $$r : $r) <= $$l : $$l <= (ref $r ? $$r : $r)},
+  '>' => sub { my ($l, $r, $s) = @_; 
+    $s ? (ref $r ? $$r : $r) > $$l : $$l > (ref $r ? $$r : $r)},
+  '>=' => sub { my ($l, $r, $s) = @_; 
+    $s ? (ref $r ? $$r : $r) >= $$l : $$l >= (ref $r ? $$r : $r)},
+  '+' => sub { my ($l, $r) = @_;
+    bless(\ ($$l + (ref $r ? $$r : $r)), ref $l)},
+  '-' => sub { my ($l, $r, $s) = @_; bless(\ (
+    $s ? (ref $r ? $$r : $r) - $$l : $$l - (ref $r ? $$r : $r)
+    ), ref $l);
+  },
+  '*' => sub { my ($l, $r) = @_;
+    bless(\($$l * (ref $r ? $$r : $r)), ref $l)
+  },
+  '/' => sub { my ($l, $r, $s) = @_;
+    my $n = $s ? (ref $r ? $$r : $r) / $$l : $$l / (ref $r ? $$r : $r);
+    bless(\$n, ref $l)
+  },
+  '~' => sub { bless(\ (~${$_[0]}), ref $_[0])},
+  '^' => sub { my ($l, $r) = @_;
+    bless(\($$l ^ (ref $r ? $$r : $r)), ref $l)
+  },
+  '|' => sub { my ($l, $r) = @_;
+    bless(\ ($$l | (ref $r ? $$r : $r)), ref $l)},
+  '&' => sub { my ($l, $r) = @_; 
+    bless( \($$l & (ref $r ? $$r : $r)), ref $l )},
+  'neg' => sub { my ($l, $r) = @_; bless(\ (-$$l), ref $l)},
+);
+
 package Qt::DBusReply;
 
 use strict;
@@ -479,17 +528,16 @@ sub init {
     push @{$classes}, keys %customClasses;
     init_class($_) for(@$classes);
 
-    %is_enum = map({$_ => 1} @{getEnumList()});
-    # my $enums = getEnumList();
-    # foreach my $enumName (@$enums) {
-    #     $enumName =~ s/^const //;
-    #     if(@{$A->("${enumName}::ISA")}) {
-    #         @{$A->("${enumName}Enum::ISA")} = ('Qt::enum::_overload');
-    #     }
-    #     else {
-    #         @{$A->("${enumName}::ISA")} = ('Qt::enum::_overload');
-    #     }
-    # }
+    foreach my $enum (@{getEnumList()}) {
+        $enum =~ s/^const //;
+        $is_enum{$enum} = 1;
+        if(@{$A->("${enum}::ISA")}) {
+            @{$A->("${enum}Enum::ISA")} = ('Qt::enum::_overload');
+        }
+        else {
+            @{$A->("${enum}::ISA")} = ('Qt::enum::_overload');
+        }
+    }
 
 }
 
