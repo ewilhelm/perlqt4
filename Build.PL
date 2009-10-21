@@ -151,6 +151,7 @@ my $builder = QtBuilder->new(
   },
   configure_requires => {
     'Module::Build' => 0.35,
+  },
 
   add_to_cleanup => [ 'Qt-*' ],
   script_files => [],
