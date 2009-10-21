@@ -94,29 +94,24 @@ TODO: {
     is ( $char->cell(), ord('f'), 'unsigned char' );
 }
 
-TODO: {
-    todo_skip("overloads and stuff", 3);
+{
     # Test short, ushort, and long marshalling
     my $shortSize = length( pack 'S', 0 );
     my $num = 5;
     my $gotNum = 0;
     my $block = Qt::ByteArray->new();
     my $stream = Qt::DataStream->new($block, Qt::IODevice::ReadWrite());
-    no warnings qw(void);
-    $stream << Qt::Short($num);
+    $stream->operator_leftshift(Qt::Short($num));
     my $streamPos = $stream->device()->pos();
     $stream->device()->seek(0);
-    $stream >> Qt::Short($gotNum);
-    use warnings;
+    $stream->operator_rightshift(Qt::Short($gotNum));
     is ( $gotNum, $num, 'signed short' );
 
     $gotNum = 0;
-    no warnings qw(void);
     $stream->device()->seek(0);
-    $stream << Qt::Ushort->new($num);
+    $stream->operator_leftshift(Qt::Ushort($num));
     $stream->device()->seek(0);
-    $stream >> Qt::Ushort->new($gotNum);
-    use warnings;
+    $stream->operator_rightshift(Qt::Ushort($gotNum));
     is ( $gotNum, $num, 'unsigned short' );
     is ( $streamPos, $shortSize, 'long' );
 }

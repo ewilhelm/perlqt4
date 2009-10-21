@@ -148,6 +148,7 @@ my %matchers = (
   '_Qt::Uchar'   => qr/^u(?=nsigned )?char[\*&]?$/,
 );
 my %is_enum;
+sub _is_enum {$is_enum{$_[0]}}
 
 sub install_autoload {
     my ($where) = @_;
@@ -329,8 +330,12 @@ sub resolver {
       elsif($p eq 'r' or $p eq 'u') {
       }
       elsif($is_enum{$p}) {
+        DEBUG verbose_calls => "  $p (enum) vs $q\n";
         last unless($q =~ m/$matchers{i}/ or
-          (($p eq $q or $p.'s' eq $q or $p->isa($q)) and ++$score)
+          (($p eq $q
+            or $p.'s' eq $q    # Flag vs Flags
+            or $p eq $q.'Flag' # XXX QIODevice::OpenModeFlag?
+            or $p->isa($q)) and ++$score)
         );
         DEBUG verbose_calls => "  $p is an enum ($q)\n";
       }
