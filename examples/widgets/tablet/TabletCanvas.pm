@@ -5,10 +5,10 @@ use warnings;
 use blib;
 
 use Qt;
-use Qt::isa qw( Qt::Widget );
+use parent qw( Qt::Widget );
 
 use Exporter;
-use base qw( Exporter );
+use parent qw( Exporter );
 our @EXPORT_OK = qw( AlphaPressure AlphaTilt NoAlpha SaturationVTilt 
     SaturationHTilt SaturationPressure NoSaturation LineWidthPressure
     LineWidthTilt NoLineWidth );
@@ -33,27 +33,33 @@ use constant {
 };
 
 sub setAlphaChannelType {
-    this->{alphaChannelType} = shift;
+    my $self = shift;
+    $self->{alphaChannelType} = shift;
 }
 
 sub setColorSaturationType {
-    this->{colorSaturationType} = shift;
+    my $self = shift;
+    $self->{colorSaturationType} = shift;
 }
 
 sub setLineWidthType {
-    this->{lineWidthType} = shift;
+    my $self = shift;
+    $self->{lineWidthType} = shift;
 }
 
 sub setColor {
-    this->{myColor} = Qt::Color(shift);
+    my $self = shift;
+    $self->{myColor} = Qt::Color->new(shift);
 }
 
 sub color {
-    return this->myColor;
+    my $self = shift;
+    return $self->myColor;
 }
 
 sub setTabletDevice {
-    this->{myTabletDevice} = shift;
+    my $self = shift;
+    $self->{myTabletDevice} = shift;
 }
 
 sub maximum {
@@ -62,92 +68,108 @@ sub maximum {
 }
 
 sub alphaChannelType() {
-    return this->{alphaChannelType};
+    my $self = shift;
+    return $self->{alphaChannelType};
 }
 
 sub colorSaturationType() {
-    return this->{colorSaturationType};
+    my $self = shift;
+    return $self->{colorSaturationType};
 }
 
 sub lineWidthType() {
-    return this->{lineWidthType};
+    my $self = shift;
+    return $self->{lineWidthType};
 }
 
 sub pointerType() {
-    return this->{pointerType};
+    my $self = shift;
+    return $self->{pointerType};
 }
 
 sub myTabletDevice() {
-    return this->{myTabletDevice};
+    my $self = shift;
+    return $self->{myTabletDevice};
 }
 
 sub myColor() {
-    return this->{myColor};
+    my $self = shift;
+    return $self->{myColor};
 }
 
 sub image() {
-    return this->{image};
+    my $self = shift;
+    return $self->{image};
 }
 
 sub myBrush() {
-    return this->{myBrush};
+    my $self = shift;
+    return $self->{myBrush};
 }
 
 sub myPen() {
-    return this->{myPen};
+    my $self = shift;
+    return $self->{myPen};
 }
 
 sub deviceDown() {
-    return this->{deviceDown};
+    my $self = shift;
+    return $self->{deviceDown};
 }
 
 sub polyLine() {
-    return this->{polyLine};
+    my $self = shift;
+    return $self->{polyLine};
 }
 
 # [0]
-sub NEW {
+sub new {
     my ( $class ) = @_;
-    $class->SUPER::NEW();
-    this->resize(500, 500);
-    this->{myBrush} = Qt::Brush();
-    this->{myPen} = Qt::Pen();
-    this->initImage();
-    this->setAutoFillBackground(1);
-    this->{deviceDown} = 0;
-    this->setColor( Qt::red() );
-    this->{myTabletDevice} = Qt::TabletEvent::Stylus();
-    this->{alphaChannelType} = NoAlpha;
-    this->{colorSaturationType} = NoSaturation;
-    this->{lineWidthType} = LineWidthPressure;
+    my $self = $class->SUPER::new();
+    $self->resize(500, 500);
+    $self->{myBrush} = Qt::Brush->new();
+    $self->{myPen} = Qt::Pen->new();
+    $self->initImage();
+    $self->setAutoFillBackground(1);
+    $self->{deviceDown} = 0;
+    $self->setColor( Qt::red() );
+    $self->{myTabletDevice} = Qt::TabletEvent::Stylus();
+    $self->{alphaChannelType} = NoAlpha;
+    $self->{colorSaturationType} = NoSaturation;
+    $self->{lineWidthType} = LineWidthPressure;
+
+    return($self);
 }
 
 sub initImage {
-    my $newImage = Qt::Image(this->width(), this->height(), Qt::Image::Format_ARGB32());
-    my $painter = Qt::Painter($newImage);
+    my $self = shift;
+    my $newImage = Qt::Image->new($self->width(), $self->height(), Qt::Image::Format_ARGB32());
+    my $painter = Qt::Painter->new($newImage);
     $painter->fillRect(0, 0, $newImage->width(), $newImage->height(), Qt::white());
-    if (this->image && !this->image->isNull()) {
-        $painter->drawImage(0, 0, this->image);
+    if ($self->image && !$self->image->isNull()) {
+        $painter->drawImage(0, 0, $self->image);
     }
     $painter->end();
-    this->{image} = $newImage;
+    $self->{image} = $newImage;
 }
 # [0]
 
 # [1]
 sub saveImage {
+    my $self = shift;
     my ($file) = @_;
-    return this->image->save($file);
+    return $self->image->save($file);
 }
 # [1]
 
 # [2]
 sub loadImage {
+    my $self = shift;
     my ($file) = @_;
-    my $success = this->image->load($file);
+    my $success = $self->image->load($file);
 
     if ($success) {
-        this->update();
+        $self->update();
         return 1;
     }
     return 0;
@@ -156,61 +178,65 @@ sub loadImage {
 
 # [3]
 sub tabletEvent {
+    my $self = shift;
     my ($event) = @_;
 
     if ( $event->type() == Qt::Event::TabletPress() ) {
-        if (!this->deviceDown) {
-            this->{deviceDown} = 1;
+        if (!$self->deviceDown) {
+            $self->{deviceDown} = 1;
         }
     }
     elsif ( $event->type() == Qt::Event::TabletRelease() ) {
-        if (this->deviceDown) {
-            this->{deviceDown} = 0;
+        if ($self->deviceDown) {
+            $self->{deviceDown} = 0;
         }
     }
     elsif ( $event->type() == Qt::Event::TabletMove() ) {
-        unshift @{this->polyLine}, $event->pos();
-        delete this->polyLine->[3];
+        unshift @{$self->polyLine}, $event->pos();
+        delete $self->polyLine->[3];
 
-        if (this->deviceDown) {
-            this->updateBrush($event);
-            my $painter = Qt::Painter(this->image);
-            this->paintImage($painter, $event);
+        if ($self->deviceDown) {
+            $self->updateBrush($event);
+            my $painter = Qt::Painter->new($self->image);
+            $self->paintImage($painter, $event);
             $painter->end();
         }
     }
-    this->update();
+    $self->update();
 }
 # [3]
 
 # [4]
 sub paintEvent {
-    my $painter = Qt::Painter(this);
-    $painter->drawImage(Qt::Point(0, 0), this->image);
+    my $self = shift;
+    my $painter = Qt::Painter->new($self);
+    $painter->drawImage(Qt::Point->new(0, 0), $self->image);
     $painter->end();
 }
 # [4]
 
 # [5]
 sub paintImage {
+    my $self = shift;
     my ($painter, $event) = @_;
-    my $brushAdjust = Qt::Point(10, 10);
 
-    my $myTabletDevice = this->myTabletDevice;
+    my $brushAdjust = Qt::Point->new(10, 10);
+
+    my $myTabletDevice = $self->myTabletDevice;
     if ( $myTabletDevice == Qt::TabletEvent::Stylus() ) {
-        $painter->setBrush(this->myBrush);
-        $painter->setPen(this->myPen);
-        $painter->drawLine(this->polyLine->[1], $event->pos());
+        $painter->setBrush($self->myBrush);
+        $painter->setPen($self->myPen);
+        $painter->drawLine($self->polyLine->[1], $event->pos());
     }
     elsif ( $myTabletDevice == Qt::TabletEvent::Airbrush() ) {
-        this->myBrush->setColor(this->myColor);
-        this->myBrush->setStyle(this->brushPattern($event->pressure()));
+        $self->myBrush->setColor($self->myColor);
+        $self->myBrush->setStyle($self->brushPattern($event->pressure()));
         $painter->setPen(Qt::NoPen());
-        $painter->setBrush(this->myBrush);
+        $painter->setBrush($self->myBrush);
 
         foreach my $i (0..2) {
-            $painter->drawEllipse(Qt::Rect(this->polyLine->[$i] - $brushAdjust,
-                                this->polyLine->[$i] + $brushAdjust));
+            $painter->drawEllipse(Qt::Rect->new($self->polyLine->[$i] - $brushAdjust,
+                                $self->polyLine->[$i] + $brushAdjust));
         }
     }
     elsif ( $myTabletDevice == Qt::TabletEvent::Puck() ||
@@ -226,6 +252,7 @@ sub paintImage {
 
 # [6]
 sub brushPattern {
+    my $self = shift;
     my ($value) = @_;
     my $pattern = int(($value) * 100.0) % 7;
 
@@ -258,66 +285,69 @@ sub brushPattern {
 
 # [7]
 sub updateBrush {
+    my $self = shift;
     my ($event) = @_;
+
     my ( $hue, $saturation, $value, $alpha );
-    this->myColor->getHsv($hue, $saturation, $value, $alpha);
+    $self->myColor->getHsv($hue, $saturation, $value, $alpha);
 
     my $vValue = int((($event->yTilt() + 60.0) / 120.0) * 255);
     my $hValue = int((($event->xTilt() + 60.0) / 120.0) * 255);
 # [7] //! [8]
 
-    my $alphaChannelType = this->alphaChannelType;
+    my $alphaChannelType = $self->alphaChannelType;
     if ( $alphaChannelType == AlphaPressure ) {
-        this->myColor->setAlpha(int($event->pressure() * 255.0));
+        $self->myColor->setAlpha(int($event->pressure() * 255.0));
     }
     elsif ( $alphaChannelType == AlphaTilt ) {
-        this->myColor->setAlpha(maximum(abs($vValue - 127), abs($hValue - 127)));
+        $self->myColor->setAlpha(maximum(abs($vValue - 127), abs($hValue - 127)));
     }
     else {
-        this->myColor->setAlpha(255);
+        $self->myColor->setAlpha(255);
     }
 
 # [8] //! [9]
-    my $colorSaturationType = this->colorSaturationType;
+    my $colorSaturationType = $self->colorSaturationType;
     if ( $colorSaturationType == SaturationVTilt ) {
-        this->myColor->setHsv($hue, $vValue, $value, $alpha);
+        $self->myColor->setHsv($hue, $vValue, $value, $alpha);
     }
     elsif ( $colorSaturationType == SaturationHTilt ) {
-        this->myColor->setHsv($hue, $hValue, $value, $alpha);
+        $self->myColor->setHsv($hue, $hValue, $value, $alpha);
     }
     elsif ( $colorSaturationType == SaturationPressure ) {
-        this->myColor->setHsv($hue, int($event->pressure() * 255.0), $value, $alpha);
+        $self->myColor->setHsv($hue, int($event->pressure() * 255.0), $value, $alpha);
     }
 
 # [9] //! [10]
-    my $lineWidthType = this->lineWidthType;
+    my $lineWidthType = $self->lineWidthType;
     if ( $lineWidthType == LineWidthPressure ) {
-        this->myPen->setWidthF($event->pressure() * 10 + 1);
+        $self->myPen->setWidthF($event->pressure() * 10 + 1);
     }
     elsif ( $lineWidthType == LineWidthTilt ) {
-        this->myPen->setWidthF(maximum(abs($vValue - 127), abs($hValue - 127)) / 12);
+        $self->myPen->setWidthF(maximum(abs($vValue - 127), abs($hValue - 127)) / 12);
     }
     else {
-        this->myPen->setWidthF(1);
+        $self->myPen->setWidthF(1);
     }
 
 # [10] //! [11]
     if ($event->pointerType() == Qt::TabletEvent::Eraser()) {
-        this->myBrush->setColor(Qt::white());
-        this->myPen->setColor(Qt::white());
-        this->myPen->setWidthF($event->pressure() * 10 + 1);
+        $self->myBrush->setColor(Qt::white());
+        $self->myPen->setColor(Qt::white());
+        $self->myPen->setWidthF($event->pressure() * 10 + 1);
     } else {
-        this->myBrush->setColor(this->myColor);
-        this->myPen->setColor(this->myColor);
+        $self->myBrush->setColor($self->myColor);
+        $self->myPen->setColor($self->myColor);
     }
 }
 # [11]
 
 sub resizeEvent {
+    my $self = shift;
     my ($event) = @_;
-    this->initImage();
-    this->{polyLine} = [];
-    this->polyLine->[0] = this->polyLine->[1] = this->polyLine->[2] = Qt::Point();
+    $self->initImage();
+    $self->{polyLine} = [];
+    $self->polyLine->[0] = $self->polyLine->[1] = $self->polyLine->[2] = Qt::Point->new();
 }
 
 1;

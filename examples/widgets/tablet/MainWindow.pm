@@ -5,7 +5,7 @@ use warnings;
 use blib;
 
 use Qt;
-use Qt::isa qw( Qt::MainWindow );
+use parent qw( Qt::MainWindow );
 # [0]
 use Qt::slots
     brushColorAct => [],
@@ -19,196 +19,233 @@ use Qt::slots
 use TabletCanvas;
 
 sub myCanvas() {
-    return this->{myCanvas};
+    my $self = shift;
+    return $self->{myCanvas};
 }
 
 sub brushColorAction() {
-    return this->{brushColorAction};
+    my $self = shift;
+    return $self->{brushColorAction};
 }
 
 sub brushActionGroup() {
-    return this->{brushActionGroup};
+    my $self = shift;
+    return $self->{brushActionGroup};
 }
 
 sub alphaChannelGroup() {
-    return this->{alphaChannelGroup};
+    my $self = shift;
+    return $self->{alphaChannelGroup};
 }
 
 sub alphaChannelPressureAction() {
-    return this->{alphaChannelPressureAction};
+    my $self = shift;
+    return $self->{alphaChannelPressureAction};
 }
 
 sub alphaChannelTiltAction() {
-    return this->{alphaChannelTiltAction};
+    my $self = shift;
+    return $self->{alphaChannelTiltAction};
 }
 
 sub noAlphaChannelAction() {
-    return this->{noAlphaChannelAction};
+    my $self = shift;
+    return $self->{noAlphaChannelAction};
 }
 
 sub colorSaturationGroup() {
-    return this->{colorSaturationGroup};
+    my $self = shift;
+    return $self->{colorSaturationGroup};
 }
 
 sub colorSaturationVTiltAction() {
-    return this->{colorSaturationVTiltAction};
+    my $self = shift;
+    return $self->{colorSaturationVTiltAction};
 }
 
 sub colorSaturationHTiltAction() {
-    return this->{colorSaturationHTiltAction};
+    my $self = shift;
+    return $self->{colorSaturationHTiltAction};
 }
 
 sub colorSaturationPressureAction() {
-    return this->{colorSaturationPressureAction};
+    my $self = shift;
+    return $self->{colorSaturationPressureAction};
 }
 
 sub noColorSaturationAction() {
-    return this->{noColorSaturationAction};
+    my $self = shift;
+    return $self->{noColorSaturationAction};
 }
 
 sub lineWidthGroup() {
-    return this->{lineWidthGroup};
+    my $self = shift;
+    return $self->{lineWidthGroup};
 }
 
 sub lineWidthPressureAction() {
-    return this->{lineWidthPressureAction};
+    my $self = shift;
+    return $self->{lineWidthPressureAction};
 }
 
 sub lineWidthTiltAction() {
-    return this->{lineWidthTiltAction};
+    my $self = shift;
+    return $self->{lineWidthTiltAction};
 }
 
 sub lineWidthFixedAction() {
-    return this->{lineWidthFixedAction};
+    my $self = shift;
+    return $self->{lineWidthFixedAction};
 }
 
 sub exitAction() {
-    return this->{exitAction};
+    my $self = shift;
+    return $self->{exitAction};
 }
 
 sub saveAction() {
-    return this->{saveAction};
+    my $self = shift;
+    return $self->{saveAction};
 }
 
 sub loadAction() {
-    return this->{loadAction};
+    my $self = shift;
+    return $self->{loadAction};
 }
 
 sub aboutAction() {
-    return this->{aboutAction};
+    my $self = shift;
+    return $self->{aboutAction};
 }
 
 sub aboutQtAction() {
-    return this->{aboutQtAction};
+    my $self = shift;
+    return $self->{aboutQtAction};
 }
 
 sub fileMenu() {
-    return this->{fileMenu};
+    my $self = shift;
+    return $self->{fileMenu};
 }
 
 sub brushMenu() {
-    return this->{brushMenu};
+    my $self = shift;
+    return $self->{brushMenu};
 }
 
 sub tabletMenu() {
-    return this->{tabletMenu};
+    my $self = shift;
+    return $self->{tabletMenu};
 }
 
 sub helpMenu() {
-    return this->{helpMenu};
+    my $self = shift;
+    return $self->{helpMenu};
 }
 
 sub colorSaturationMenu() {
-    return this->{colorSaturationMenu};
+    my $self = shift;
+    return $self->{colorSaturationMenu};
 }
 
 sub lineWidthMenu() {
-    return this->{lineWidthMenu};
+    my $self = shift;
+    return $self->{lineWidthMenu};
 }
 
 sub alphaChannelMenu() {
-    return this->{alphaChannelMenu};
+    my $self = shift;
+    return $self->{alphaChannelMenu};
 }
 # [0]
 
 # [0]
-sub NEW {
+sub new {
     my ($class, $canvas) = @_;
-    $class->SUPER::NEW();
-    this->{myCanvas} = $canvas;
-    this->createActions();
-    this->createMenus();
+    my $self = $class->SUPER::new();
+    $self->{myCanvas} = $canvas;
+    $self->createActions();
+    $self->createMenus();
 
-    this->myCanvas->setColor(Qt::red());
-    this->myCanvas->setLineWidthType(TabletCanvas::LineWidthPressure());
-    this->myCanvas->setAlphaChannelType(TabletCanvas::NoAlpha());
-    this->myCanvas->setColorSaturationType(TabletCanvas::NoSaturation());
+    $self->myCanvas->setColor(Qt::red());
+    $self->myCanvas->setLineWidthType(TabletCanvas::LineWidthPressure());
+    $self->myCanvas->setAlphaChannelType(TabletCanvas::NoAlpha());
+    $self->myCanvas->setColorSaturationType(TabletCanvas::NoSaturation());
 
-    this->setWindowTitle(this->tr('Tablet Example'));
-    this->setCentralWidget(this->myCanvas);
+    $self->setWindowTitle($self->tr('Tablet Example'));
+    $self->setCentralWidget($self->myCanvas);
+    return($self);
 }
 # [0]
 
 # [1]
 sub brushColorAct {
-    my $color = Qt::ColorDialog::getColor(this->myCanvas->color());
+    my $self = shift;
+    my $color = Qt::ColorDialog::getColor($self->myCanvas->color());
 
     if ($color->isValid()) {
-        this->myCanvas->setColor($color);
+        $self->myCanvas->setColor($color);
     }
 }
 # [1]
 
 # [2]
 sub alphaActionTriggered {
+    my $self = shift;
     my ($action) = @_;
-    if ($action == this->alphaChannelPressureAction) {
-        this->myCanvas->setAlphaChannelType(TabletCanvas::AlphaPressure());
-    } elsif ($action == this->alphaChannelTiltAction) {
-        this->myCanvas->setAlphaChannelType(TabletCanvas::AlphaTilt());
+
+    if ($action == $self->alphaChannelPressureAction) {
+        $self->myCanvas->setAlphaChannelType(TabletCanvas::AlphaPressure());
+    } elsif ($action == $self->alphaChannelTiltAction) {
+        $self->myCanvas->setAlphaChannelType(TabletCanvas::AlphaTilt());
     } else {
-        this->myCanvas->setAlphaChannelType(TabletCanvas::NoAlpha());
+        $self->myCanvas->setAlphaChannelType(TabletCanvas::NoAlpha());
     }
 }
 # [2]
 
 # [3]
 sub lineWidthActionTriggered {
+    my $self = shift;
     my ($action) = @_;
-    $DB::single=1;
-    if ($action == this->lineWidthPressureAction) {
-        this->myCanvas->setLineWidthType(TabletCanvas::LineWidthPressure());
-    } elsif ($action == this->lineWidthTiltAction) {
-        this->myCanvas->setLineWidthType(TabletCanvas::LineWidthTilt());
+
+    $DB::single=1; # XXX what?
+    if ($action == $self->lineWidthPressureAction) {
+        $self->myCanvas->setLineWidthType(TabletCanvas::LineWidthPressure());
+    } elsif ($action == $self->lineWidthTiltAction) {
+        $self->myCanvas->setLineWidthType(TabletCanvas::LineWidthTilt());
     } else {
-        this->myCanvas->setLineWidthType(TabletCanvas::NoLineWidth());
+        $self->myCanvas->setLineWidthType(TabletCanvas::NoLineWidth());
     }
 }
 # [3]
 
 # [4]
 sub saturationActionTriggered {
+    my $self = shift;
     my ($action) = @_;
-    if ($action == this->colorSaturationVTiltAction) {
-        this->myCanvas->setColorSaturationType(TabletCanvas::SaturationVTilt());
-    } elsif ($action == this->colorSaturationHTiltAction) {
-        this->myCanvas->setColorSaturationType(TabletCanvas::SaturationHTilt());
-    } elsif ($action == this->colorSaturationPressureAction) {
-        this->myCanvas->setColorSaturationType(TabletCanvas::SaturationPressure());
+
+    if ($action == $self->colorSaturationVTiltAction) {
+        $self->myCanvas->setColorSaturationType(TabletCanvas::SaturationVTilt());
+    } elsif ($action == $self->colorSaturationHTiltAction) {
+        $self->myCanvas->setColorSaturationType(TabletCanvas::SaturationHTilt());
+    } elsif ($action == $self->colorSaturationPressureAction) {
+        $self->myCanvas->setColorSaturationType(TabletCanvas::SaturationPressure());
     } else {
-        this->myCanvas->setColorSaturationType(TabletCanvas::NoSaturation());
+        $self->myCanvas->setColorSaturationType(TabletCanvas::NoSaturation());
     }
 }
 # [4]
 
 # [5]
 sub saveAct {
+    my $self = shift;
     my $path = Qt::Dir::currentPath() . '/untitled.png';
-    my $fileName = Qt::FileDialog::getSaveFileName(this, this->tr('Save Picture'),
+    my $fileName = Qt::FileDialog::getSaveFileName($self, $self->tr('Save Picture'),
                              $path);
 
-    if (!this->myCanvas->saveImage($fileName)) {
-        Qt::MessageBox::information(this, 'Error Saving Picture',
+    if (!$self->myCanvas->saveImage($fileName)) {
+        Qt::MessageBox::information($self, 'Error Saving Picture',
                                  'Could not save the image');
     }
 }
@@ -216,11 +253,12 @@ sub saveAct {
 
 # [6]
 sub loadAct {
-    my $fileName = Qt::FileDialog::getOpenFileName(this, this->tr('Open Picture'),
+    my $self = shift;
+    my $fileName = Qt::FileDialog::getOpenFileName($self, $self->tr('Open Picture'),
                                                     Qt::Dir::currentPath());
 
-    if (!this->myCanvas->loadImage($fileName)) {
-        Qt::MessageBox::information(this, 'Error Opening Picture',
+    if (!$self->myCanvas->loadImage($fileName)) {
+        Qt::MessageBox::information($self, 'Error Opening Picture',
                                  'Could not open picture');
     }
 }
@@ -228,99 +266,101 @@ sub loadAct {
 
 # [7]
 sub aboutAct {
-    Qt::MessageBox::about(this, this->tr('About Tablet Example'),
-                       this->tr('This example shows use of a Wacom tablet in Qt'));
+    my $self = shift;
+    Qt::MessageBox::about($self, $self->tr('About Tablet Example'),
+                       $self->tr('This example shows use of a Wacom tablet in Qt'));
 }
 # [7]
 
 # [8]
 sub createActions {
 # [8]
-    this->{brushColorAction} = Qt::Action(this->tr('&Brush Color...'), this);
-    this->brushColorAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+C')));
-    this->connect(this->brushColorAction, SIGNAL 'triggered()',
-            this, SLOT 'brushColorAct()');
+    my $self = shift;
+    $self->{brushColorAction} = Qt::Action->new($self->tr('&Brush Color...'), $self);
+    $self->brushColorAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+C')));
+    $self->connect($self->brushColorAction, SIGNAL 'triggered()',
+            $self, SLOT 'brushColorAct()');
 
 # [9]
-    this->{alphaChannelPressureAction} = Qt::Action(this->tr('&Pressure'), this);
-    this->alphaChannelPressureAction->setCheckable(1);
+    $self->{alphaChannelPressureAction} = Qt::Action->new($self->tr('&Pressure'), $self);
+    $self->alphaChannelPressureAction->setCheckable(1);
 
-    this->{alphaChannelTiltAction} = Qt::Action(this->tr('&Tilt'), this);
-    this->alphaChannelTiltAction->setCheckable(1);
+    $self->{alphaChannelTiltAction} = Qt::Action->new($self->tr('&Tilt'), $self);
+    $self->alphaChannelTiltAction->setCheckable(1);
 
-    this->{noAlphaChannelAction} = Qt::Action(this->tr('No Alpha Channel'), this);
-    this->noAlphaChannelAction->setCheckable(1);
-    this->noAlphaChannelAction->setChecked(1);
+    $self->{noAlphaChannelAction} = Qt::Action->new($self->tr('No Alpha Channel'), $self);
+    $self->noAlphaChannelAction->setCheckable(1);
+    $self->noAlphaChannelAction->setChecked(1);
 
-    this->{alphaChannelGroup} = Qt::ActionGroup(this);
-    this->alphaChannelGroup->addAction(this->alphaChannelPressureAction);
-    this->alphaChannelGroup->addAction(this->alphaChannelTiltAction);
-    this->alphaChannelGroup->addAction(this->noAlphaChannelAction);
-    this->connect(this->alphaChannelGroup, SIGNAL 'triggered(QAction *)',
-            this, SLOT 'alphaActionTriggered(QAction *)');
+    $self->{alphaChannelGroup} = Qt::ActionGroup->new($self);
+    $self->alphaChannelGroup->addAction($self->alphaChannelPressureAction);
+    $self->alphaChannelGroup->addAction($self->alphaChannelTiltAction);
+    $self->alphaChannelGroup->addAction($self->noAlphaChannelAction);
+    $self->connect($self->alphaChannelGroup, SIGNAL 'triggered(QAction *)',
+            $self, SLOT 'alphaActionTriggered(QAction *)');
 
 # [9]
-    this->{colorSaturationVTiltAction} = Qt::Action(this->tr('&Vertical Tilt'), this);
-    this->colorSaturationVTiltAction->setCheckable(1);
+    $self->{colorSaturationVTiltAction} = Qt::Action->new($self->tr('&Vertical Tilt'), $self);
+    $self->colorSaturationVTiltAction->setCheckable(1);
 
-    this->{colorSaturationHTiltAction} = Qt::Action(this->tr('&Horizontal Tilt'), this);
-    this->colorSaturationHTiltAction->setCheckable(1);
+    $self->{colorSaturationHTiltAction} = Qt::Action->new($self->tr('&Horizontal Tilt'), $self);
+    $self->colorSaturationHTiltAction->setCheckable(1);
 
-    this->{colorSaturationPressureAction} = Qt::Action(this->tr('&Pressure'), this);
-    this->colorSaturationPressureAction->setCheckable(1);
+    $self->{colorSaturationPressureAction} = Qt::Action->new($self->tr('&Pressure'), $self);
+    $self->colorSaturationPressureAction->setCheckable(1);
 
-    this->{noColorSaturationAction} = Qt::Action(this->tr('&No Color Saturation'), this);
-    this->noColorSaturationAction->setCheckable(1);
-    this->noColorSaturationAction->setChecked(1);
+    $self->{noColorSaturationAction} = Qt::Action->new($self->tr('&No Color Saturation'), $self);
+    $self->noColorSaturationAction->setCheckable(1);
+    $self->noColorSaturationAction->setChecked(1);
 
-    this->{colorSaturationGroup} = Qt::ActionGroup(this);
-    this->colorSaturationGroup->addAction(this->colorSaturationVTiltAction);
-    this->colorSaturationGroup->addAction(this->colorSaturationHTiltAction);
-    this->colorSaturationGroup->addAction(this->colorSaturationPressureAction);
-    this->colorSaturationGroup->addAction(this->noColorSaturationAction);
-    this->connect(this->colorSaturationGroup, SIGNAL 'triggered(QAction *)',
-            this, SLOT 'saturationActionTriggered(QAction *)');
+    $self->{colorSaturationGroup} = Qt::ActionGroup->new($self);
+    $self->colorSaturationGroup->addAction($self->colorSaturationVTiltAction);
+    $self->colorSaturationGroup->addAction($self->colorSaturationHTiltAction);
+    $self->colorSaturationGroup->addAction($self->colorSaturationPressureAction);
+    $self->colorSaturationGroup->addAction($self->noColorSaturationAction);
+    $self->connect($self->colorSaturationGroup, SIGNAL 'triggered(QAction *)',
+            $self, SLOT 'saturationActionTriggered(QAction *)');
 
-    this->{lineWidthPressureAction} = Qt::Action(this->tr('&Pressure'), this);
-    this->lineWidthPressureAction->setCheckable(1);
-    this->lineWidthPressureAction->setChecked(1);
+    $self->{lineWidthPressureAction} = Qt::Action->new($self->tr('&Pressure'), $self);
+    $self->lineWidthPressureAction->setCheckable(1);
+    $self->lineWidthPressureAction->setChecked(1);
 
-    this->{lineWidthTiltAction} = Qt::Action(this->tr('&Tilt'), this);
-    this->lineWidthTiltAction->setCheckable(1);
+    $self->{lineWidthTiltAction} = Qt::Action->new($self->tr('&Tilt'), $self);
+    $self->lineWidthTiltAction->setCheckable(1);
 
-    this->{lineWidthFixedAction} = Qt::Action(this->tr('&Fixed'), this);
-    this->lineWidthFixedAction->setCheckable(1);
+    $self->{lineWidthFixedAction} = Qt::Action->new($self->tr('&Fixed'), $self);
+    $self->lineWidthFixedAction->setCheckable(1);
 
-    this->{lineWidthGroup} = Qt::ActionGroup(this);
-    this->lineWidthGroup->addAction(this->lineWidthPressureAction);
-    this->lineWidthGroup->addAction(this->lineWidthTiltAction);
-    this->lineWidthGroup->addAction(this->lineWidthFixedAction);
-    this->connect(this->lineWidthGroup, SIGNAL 'triggered(QAction *)',
-            this, SLOT 'lineWidthActionTriggered(QAction *)');
+    $self->{lineWidthGroup} = Qt::ActionGroup->new($self);
+    $self->lineWidthGroup->addAction($self->lineWidthPressureAction);
+    $self->lineWidthGroup->addAction($self->lineWidthTiltAction);
+    $self->lineWidthGroup->addAction($self->lineWidthFixedAction);
+    $self->connect($self->lineWidthGroup, SIGNAL 'triggered(QAction *)',
+            $self, SLOT 'lineWidthActionTriggered(QAction *)');
 
-    this->{exitAction} = Qt::Action(this->tr('E&xit'), this);
-    this->exitAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+X')));
-    this->connect(this->exitAction, SIGNAL 'triggered()',
-            this, SLOT 'close()');
+    $self->{exitAction} = Qt::Action->new($self->tr('E&xit'), $self);
+    $self->exitAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+X')));
+    $self->connect($self->exitAction, SIGNAL 'triggered()',
+            $self, SLOT 'close()');
 
-    this->{loadAction} = Qt::Action(this->tr('&Open...'), this);
-    this->loadAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+O')));
-    this->connect(this->loadAction, SIGNAL 'triggered()',
-            this, SLOT 'loadAct()');
+    $self->{loadAction} = Qt::Action->new($self->tr('&Open...'), $self);
+    $self->loadAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+O')));
+    $self->connect($self->loadAction, SIGNAL 'triggered()',
+            $self, SLOT 'loadAct()');
 
-    this->{saveAction} = Qt::Action(this->tr('&Save As...'), this);
-    this->saveAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+S')));
-    this->connect(this->saveAction, SIGNAL 'triggered()',
-            this, SLOT 'saveAct()');
+    $self->{saveAction} = Qt::Action->new($self->tr('&Save As...'), $self);
+    $self->saveAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+S')));
+    $self->connect($self->saveAction, SIGNAL 'triggered()',
+            $self, SLOT 'saveAct()');
 
-    this->{aboutAction} = Qt::Action(this->tr('A&bout'), this);
-    this->aboutAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+B')));
-    this->connect(this->aboutAction, SIGNAL 'triggered()',
-            this, SLOT 'aboutAct()');
+    $self->{aboutAction} = Qt::Action->new($self->tr('A&bout'), $self);
+    $self->aboutAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+B')));
+    $self->connect($self->aboutAction, SIGNAL 'triggered()',
+            $self, SLOT 'aboutAct()');
 
-    this->{aboutQtAction} = Qt::Action(this->tr('About &Qt'), this);
-    this->aboutQtAction->setShortcut(Qt::KeySequence(this->tr('Ctrl+Q')));
-    this->connect(this->aboutQtAction, SIGNAL 'triggered()',
+    $self->{aboutQtAction} = Qt::Action->new($self->tr('About &Qt'), $self);
+    $self->aboutQtAction->setShortcut(Qt::KeySequence->new($self->tr('Ctrl+Q')));
+    $self->connect($self->aboutQtAction, SIGNAL 'triggered()',
             qApp, SLOT 'aboutQt()');
 # [10]
 }
@@ -328,35 +368,36 @@ sub createActions {
 
 # [11]
 sub createMenus {
-    this->{fileMenu} = this->menuBar()->addMenu(this->tr('&File'));
-    fileMenu->addAction(this->loadAction);
-    fileMenu->addAction(this->saveAction);
-    fileMenu->addSeparator();
-    fileMenu->addAction(this->exitAction);
+    my $self = shift;
+    $self->{fileMenu} = $self->menuBar()->addMenu($self->tr('&File'));
+    $self->fileMenu->addAction($self->loadAction);
+    $self->fileMenu->addAction($self->saveAction);
+    $self->fileMenu->addSeparator();
+    $self->fileMenu->addAction($self->exitAction);
 
-    this->{brushMenu} = this->menuBar()->addMenu(this->tr('&Brush'));
-    this->brushMenu->addAction(this->brushColorAction);
+    $self->{brushMenu} = $self->menuBar()->addMenu($self->tr('&Brush'));
+    $self->brushMenu->addAction($self->brushColorAction);
 
-    this->{tabletMenu} = this->menuBar()->addMenu(this->tr('&Tablet'));
+    $self->{tabletMenu} = $self->menuBar()->addMenu($self->tr('&Tablet'));
 
-    this->{lineWidthMenu} = this->tabletMenu->addMenu(this->tr('&Line Width'));
-    this->lineWidthMenu->addAction(this->lineWidthPressureAction);
-    this->lineWidthMenu->addAction(this->lineWidthTiltAction);
-    this->lineWidthMenu->addAction(this->lineWidthFixedAction);
+    $self->{lineWidthMenu} = $self->tabletMenu->addMenu($self->tr('&Line Width'));
+    $self->lineWidthMenu->addAction($self->lineWidthPressureAction);
+    $self->lineWidthMenu->addAction($self->lineWidthTiltAction);
+    $self->lineWidthMenu->addAction($self->lineWidthFixedAction);
 
-    this->{alphaChannelMenu} = this->tabletMenu->addMenu(this->tr('&Alpha Channel'));
-    this->alphaChannelMenu->addAction(this->alphaChannelPressureAction);
-    this->alphaChannelMenu->addAction(this->alphaChannelTiltAction);
-    this->alphaChannelMenu->addAction(this->noAlphaChannelAction);
+    $self->{alphaChannelMenu} = $self->tabletMenu->addMenu($self->tr('&Alpha Channel'));
+    $self->alphaChannelMenu->addAction($self->alphaChannelPressureAction);
+    $self->alphaChannelMenu->addAction($self->alphaChannelTiltAction);
+    $self->alphaChannelMenu->addAction($self->noAlphaChannelAction);
 
-    this->{colorSaturationMenu} = this->tabletMenu->addMenu(this->tr('&Color Saturation'));
-    this->colorSaturationMenu->addAction(this->colorSaturationVTiltAction);
-    this->colorSaturationMenu->addAction(this->colorSaturationHTiltAction);
-    this->colorSaturationMenu->addAction(this->noColorSaturationAction);
+    $self->{colorSaturationMenu} = $self->tabletMenu->addMenu($self->tr('&Color Saturation'));
+    $self->colorSaturationMenu->addAction($self->colorSaturationVTiltAction);
+    $self->colorSaturationMenu->addAction($self->colorSaturationHTiltAction);
+    $self->colorSaturationMenu->addAction($self->noColorSaturationAction);
 
-    this->{helpMenu} = this->menuBar()->addMenu('&Help');
-    this->helpMenu->addAction(this->aboutAction);
-    this->helpMenu->addAction(this->aboutQtAction);
+    $self->{helpMenu} = $self->menuBar()->addMenu('&Help');
+    $self->helpMenu->addAction($self->aboutAction);
+    $self->helpMenu->addAction($self->aboutQtAction);
 }
 # [11]
 

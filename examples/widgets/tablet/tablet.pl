@@ -11,11 +11,11 @@ use TabletCanvas;
 
 # [0]
 sub main {
-    my $app = TabletApplication( \@ARGV );
-    my $canvas = TabletCanvas();
+    my $app = TabletApplication->new( \@ARGV );
+    my $canvas = TabletCanvas->new();
     $app->setCanvas($canvas);
 
-    my $mainWindow = MainWindow($canvas);
+    my $mainWindow = MainWindow->new($canvas);
     $mainWindow->resize(500, 500);
     $mainWindow->show();
 
