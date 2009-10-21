@@ -249,11 +249,12 @@ sub install_autoload {
       > greaterthan
       / slash
     );
+    $om{$_} = join('', map({$om{$_}} split(//, $_)))
+      for(qw(^= <= == >= |= -= -- != /= *= &= += ++));
+    $om{'<<'} = 'leftshift';
+    $om{'>>'} = 'rightshift';
     my %ops = (
-      qw(
-      << leftshift
-      >> rightshift
-      ),
+      %om,
       '[]'                  => 'list',
       ' bool'               => 'bool',
       ' const char *'       => 'const_char_pointer',
@@ -264,13 +265,12 @@ sub install_autoload {
       ' QPointF'            => 'QPointF',
       ' QString'            => 'QString',
       ' QVariant'           => 'Qvariant',
-      map({$_ => $om{$_}} keys %om),
-      map({$_ => join('', map({$om{$_}} split(//, $_)))}
-        qw(^= <= == >= |= -= -- != /= *= &= += ++)),
     );
     my @ok = keys(%ops);
+    my %op_name;
     foreach my $k (@ok) {
-      $ops{'operator' . $k} = 'operator_' . delete($ops{$k});
+      my $n = $ops{'operator' . $k} = 'operator_' . delete($ops{$k});
+      $op_name{$n} = $k if($om{$k});
     }
     sub populate_class {
         my ($where) = @_;
@@ -299,10 +299,15 @@ sub install_autoload {
         my $h = get_methods_for($cxx_class) or die "oh no";
 
         my $notes = $H->("$where\::_CXXCODE");
-        my $code = qq(package $where;\nuse warnings; use strict;\n);
+        # generate the code
+        my $prelude = qq(package $where;\nuse warnings; use strict;\n);
+        my @overloads;
+        my @code;
         foreach my $k (sort keys %$h) {
             next if($k =~ m/^~/);
             my $name = $k eq $cxx ? 'new' : ($ops{$k} || $k);
+            push(@overloads, [$op_name{$name}, $name])
+              if($ops{$k} and $op_name{$name});
             my $id_list = join(',', @{$h->{$k}});
 
             $k = '+'.$k if($k eq $cxx); # XXX silly workaround
@@ -314,10 +319,18 @@ sub install_autoload {
                 $notes->{$name} = 1;
             }
 
-            $code .= "sub $name {" .
+            push(@code, "sub $name {" .
                 "unshift(\@_, '$where', '$k', [$id_list]); " .
-                "goto &Qt::_internal::go}\n";
+                "goto &Qt::_internal::go}"
+            );
         }
+        my $code = $prelude . join("\n",
+        (@overloads
+          ? join("\n  ", 'use overload (',
+            'fallback => 1,',
+            map({qq{'$_->[0]' => '$_->[1]',}} @overloads)) . "\n);\n"
+          : ()
+        ), @code, '1;');
         DEBUG autoload_verbose => "installing $code ";
         eval($code);
         die $@ if($@); # TODO die with line numbers on $code

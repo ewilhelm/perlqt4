@@ -157,16 +157,13 @@ my $app = Qt::Application->new( \@ARGV );
     is(ref($got), 'ARRAY', "ARRAY ref");
     is(scalar(@$got), scalar(@$shortcuts), 'count');
 
-    TODO: { local $TODO = 'KeySequence operators';
     is_deeply(
       [ map{ $shortcuts->[$_] == $got->[$_] } (0..$#$shortcuts) ],
       [ map{ 1 } (0..$#{$shortcuts}) ],
       'marshall_ValueListItem<> FromSV' );
-    }
 }
 
 {
-
     my $tree = Qt::TableView->new( undef );
     my $model = Qt::DirModel->new();
 
@@ -185,11 +182,9 @@ my $app = Qt::Application->new( \@ARGV );
     my $indexes = $selection->indexes();
     is($#$indexes, $#child, "index length");
 
-    TODO: { local $TODO = "ModelIndex operators";
     is_deeply( [ map{ $indexes->[$_] == $child[$_] } (0..$#child) ],
                [ map{ 1 } (0..$#child) ],
                'marshall_ValueListItem<> ToSV' );
-    }
 }
 
 TODO: {
