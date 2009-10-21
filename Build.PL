@@ -140,14 +140,17 @@ my $builder = QtBuilder->new(
     'strict'                => 0,
   },
   build_requires => {
-    # For the XS build process
     'ExtUtils::CBuilder'    => 0,
     'ExtUtils::ParseXS'     => 0,
+    'Test::More'            => 0.88,
+    'Module::Build'         => 0.35,
   },
   recommends => {
   },
   conflicts => {
   },
+  configure_requires => {
+    'Module::Build' => 0.35,
 
   add_to_cleanup => [ 'Qt-*' ],
   script_files => [],
