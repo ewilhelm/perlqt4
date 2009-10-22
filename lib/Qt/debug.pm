@@ -89,13 +89,15 @@ sub unimport {
 sub DEBUG (@) {
   my ($flags, @msg) = @_;
 
+  my $debug = Qt::_internal::getDebug() or return;
+
   my $db_flag = 0;
   foreach my $flag (split(/_/, $flags)) {
     croak("no such channel '$flag'") unless(exists $channel{$flag});
     $db_flag |= $channel{$flag};
   }
 
-  return unless(($db_flag & Qt::_internal::getDebug()) == $db_flag);
+  return unless(($db_flag & $debug) == $db_flag);
 
   # my $x = $Carp::Verbose;
   if($msg[-1] =~ m/\n$/ and not $Carp::Verbose) {
