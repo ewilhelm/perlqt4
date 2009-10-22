@@ -221,6 +221,7 @@ call_smoke(methodid, object, ...)
         call.next();
         delete [] mystack;
         RETVAL = call.var();
+        dbg_p(qtdb_calls|qtdb_verbose, "call_smoke returning\n");
         if(qt_Smoke->methods[methodid].flags & Smoke::mf_ctor)
           sv_bless(RETVAL,
             gv_stashpv(SvPV_nolen(object), TRUE) );
@@ -242,6 +243,8 @@ make_metaObject(parentClassId,parentMeta,stringdata_sv,data_sv)
         // Get the meta object of the super class, to inherit the super's
         // sig/slots
         QMetaObject* superdata;
+        dbg_p(qtdb_meta|qtdb_verbose, "make_metaObject %s\n",
+          SvPV_nolen(stringdata_sv));
         if( SvROK(parentMeta) ){
             // The parent class is a custom Perl class whose metaObject
             // was constructed at runtime

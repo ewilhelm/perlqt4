@@ -1482,6 +1482,11 @@ XS(XS_qt_metacall){
     int _id = (int) SvIV(ST(2));
     void** _a = (void**) sv_obj_info(ST(3))->ptr;
 
+    dbg_p(qtdb_meta, "qt_metacall(%s)\n  (%s, %s, %s, %s)\n",
+      SvPV_nolen(sv_2mortal(catArguments(SP - items + 1, items ))),
+      SvPV_nolen(ST(0)), SvPV_nolen(ST(1)), SvPV_nolen(ST(2)), SvPV_nolen(ST(3))
+    );
+
     // Assume the target slot is a C++ one
     Smoke::ModuleIndex nameId = o->smoke->idMethodName("qt_metacall$$?");
     Smoke::ModuleIndex classIdx = { o->smoke, o->classId };
@@ -1493,10 +1498,14 @@ XS(XS_qt_metacall){
         i[1].s_enum = _c;
         i[2].s_int = _id;
         i[3].s_voidp = _a;
+        dbg_p(qtdb_meta, "  qt_metacall calls metacall (%d) {{{\n",
+          meth.smoke->methodMaps[meth.index].method);
         (*fn)(m.method, o->ptr, i);
+        dbg_p(qtdb_meta, "  }}} qt_metacall called metacall\n");
         int ret = i[0].s_int;
         if (ret < 0) {
             ST(0) = sv_2mortal(newSViv(ret));
+            dbg_p(qtdb_meta, "  qt_metacall < 0 %s\n", SvPV_nolen(ST(0)));
             XSRETURN(1);
         }
     } else {
@@ -1505,8 +1514,10 @@ XS(XS_qt_metacall){
                o->smoke->classes[o->classId].className );
     }
 
+    dbg_p(qtdb_meta, "  qt_metacall calls metaObject() {{{\n");
     // Get the current metaobject with a virtual call
     const QMetaObject* metaobject = sv_this_ptr->metaObject();
+    dbg_p(qtdb_meta, "  }}} qt_metacall called metaObject()\n");
 
     // get method/property count
     int count = 0;
@@ -1523,13 +1534,14 @@ XS(XS_qt_metacall){
         // This code gets called when a cxx signal is connected to a signal
         // defined in a perl package
         if (method.methodType() == QMetaMethod::Signal) {
-#ifdef DEBUG
-            if(do_debug && (do_debug & qtdb_signals))
-                fprintf( stderr, "In signal for %s::%s\n", metaobject->className(), method.signature() );
-#endif
+            dbg_p(qtdb_signals,
+              "  In signal for %s::%s {{{\n", metaobject->className(), method.signature() );
             metaobject->activate(sv_this_ptr, metaobject, 0, _a);
+            dbg_p(qtdb_signals,
+              "  }}} activated signal for %s::%s\n", metaobject->className(), method.signature() );
             // +1.  Id is 0 based, count is 1 based
             ST(0) = sv_2mortal(newSViv(_id - count + 1));
+            dbg_p(qtdb_meta, "<- qt_metacall returning %s\n", SvPV_nolen(ST(0)));
             XSRETURN(1);
         }
         else if (method.methodType() == QMetaMethod::Slot) {
@@ -1545,13 +1557,18 @@ XS(XS_qt_metacall){
             }
             name.replace(*rx, "");
 
+            dbg_p(qtdb_slots,
+              "  Invoke slot for %s::%s {{{\n", metaobject->className(), method.signature() );
             PerlQt::InvokeSlot slot( sv_this, name.toLatin1().data(), mocArgs, _a );
             slot.next();
+            dbg_p(qtdb_slots,
+              "  }}} invoked slot for %s::%s\n", metaobject->className(), method.signature() );
         }
     }
 
     // This should return -1 when we're the one that handled the call
     ST(0) = sv_2mortal(newSViv(_id - count));
+    dbg_p(qtdb_meta, "<- qt_metacall returning %s\n", SvPV_nolen(ST(0)));
     XSRETURN(1);
 }
 
@@ -1575,17 +1592,13 @@ XS(XS_signal){
     // called.
     GV* gv = CvGV(cv);
     QLatin1String signalname( GvNAME(gv) );
-#ifdef DEBUG
-    if(do_debug && (do_debug & qtdb_signals)){
-        fprintf( stderr, "In signal call %s::%s\n", HvNAME( GvSTASH(gv) ), GvNAME(gv) );
-        if(do_debug & qtdb_verbose) {
-            fprintf(stderr, "with arguments (%s) ", SvPV_nolen(sv_2mortal(catArguments(SP - items + 1, items ))));
-            // See cop.h in the perl src for more info on Control ops
-            fprintf(stderr, "called at line %lu in %s\n",
-              (long unsigned int) CopLINE(PL_curcop), GvNAME(CopFILEGV(PL_curcop))+2 );
-        }
-    }
-#endif
+
+    dbg_p(qtdb_signals, "In signal call %s::%s\n", HvNAME( GvSTASH(gv) ), GvNAME(gv) );
+    dbg_p(qtdb_signals|qtdb_verbose,
+      "  with arguments (%s) called at line %lu in %s\n",
+      SvPV_nolen(sv_2mortal(catArguments(SP - items + 1, items ))),
+      // See cop.h in the perl src for more info on Control ops
+      (long unsigned int) CopLINE(PL_curcop), GvNAME(CopFILEGV(PL_curcop))+2 );
 
     // Get the current metaobject with a virtual call
     const QMetaObject* metaobject = qobj->metaObject();

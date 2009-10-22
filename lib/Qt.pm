@@ -436,7 +436,7 @@ sub go {
 
     $self = shift(@_) if($method =~ s/^\+//); # XXX silly workaround
 
-    DEBUG calls => "$method candidates: ", join(", ", @$id_list);
+    DEBUG calls => "$class $method candidates: ", join(", ", @$id_list);
 
     my @ptypes = map({getSVt($_)} @_);
     my $id = $#$id_list ? resolver($id_list, \@ptypes) : $id_list->[0];
