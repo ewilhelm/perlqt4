@@ -376,14 +376,6 @@ int isDerivedFrom(Smoke *smoke, Smoke::Index classId, Smoke::Index baseId, int c
     return -1;
 }
 
-int isDerivedFrom(Smoke *smoke, const char *className, const char *baseClassName, int cnt) {
-    if(!smoke || !className || !baseClassName)
-        return -1;
-    Smoke::Index idClass = smoke->idClass(className).index;
-    Smoke::Index idBase = smoke->idClass(baseClassName).index;
-    return isDerivedFrom(smoke, idClass, idBase, cnt);
-}
-
 // Enter keys: integer memory address of a cxxptr, values: associated perl sv
 // into pointer_map hash
 // Recurse to store it also as casted to its parent classes, which could (and

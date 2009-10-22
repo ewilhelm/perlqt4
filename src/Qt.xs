@@ -26,53 +26,6 @@ MODULE = Qt                PACKAGE = Qt::_internal
 
 PROTOTYPES: DISABLE
 
-int
-classIsa( className, base )
-        char *className
-        char *base
-    CODE:
-        RETVAL = isDerivedFrom(qt_Smoke, className, base, 0);
-    OUTPUT:
-        RETVAL
-
-#// Args: classname: a c++ classname in which the method exists
-#//       methodname: a munged method name signature, where $ is a scalar
-#//       argument, ? is an array or hash ref, and # is an object
-#// Returns: an array containing 1 method id if the method signature is unique,
-#//          or an array of possible ids if the signature is ambiguous
-void
-findMethod( classname, methodname )
-        char* classname
-        char* methodname
-    PPCODE:
-        Smoke::Index method = qt_Smoke->findMethod(classname, methodname).index;
-        if ( !method ) {
-            // empty list
-        }
-        else if ( method > 0 ) {
-            Smoke::Index methodId = qt_Smoke->methodMaps[method].method;
-            if ( !methodId ) {
-                croak( "Corrupt method %s::%s", classname, methodname );
-            }
-            else if ( methodId > 0 ) {     // single match
-                XPUSHs( sv_2mortal(newSViv((IV)methodId)) );
-            }
-            else {                  // multiple match
-                // trun into ambiguousMethodList index
-                methodId = -methodId;
-
-                // Put all ambiguous method possibilities onto the stack
-                while( qt_Smoke->ambiguousMethodList[methodId] ) {
-                    XPUSHs( 
-                        sv_2mortal(
-                            newSViv( (IV)qt_Smoke->ambiguousMethodList[methodId] )
-                        )
-                    );
-                    ++methodId;
-                }
-            }
-        }
-
 SV*
 get_methods_for(classname)
         char* classname
@@ -148,26 +101,6 @@ getIsa( classId )
             qt_Smoke->classes[classId].parents;
         while(*parents)
             XPUSHs(sv_2mortal(newSVpv(qt_Smoke->classes[*parents++].className, 0)));
-
-#// Args: methodId: a smoke method id
-#//       argnum: the argument number to query
-#// Returns: the c++ type of the n'th argument of methodId's associated method
-char*
-getTypeNameOfArg( methodId, argnum )
-        int methodId
-        int argnum
-    CODE:
-        Smoke::Method &method = qt_Smoke->methods[methodId];
-        Smoke::Index* args = qt_Smoke->argumentList + method.args;
-        if(argnum >= method.numArgs)
-            croak("method %s (%d) only has %d args\n",
-              qt_Smoke->methodNames[method.name],
-              methodId,
-              method.numArgs
-            );
-        RETVAL = (char*)qt_Smoke->types[args[argnum]].name;
-    OUTPUT:
-        RETVAL
 
 =head2 get_arg_types
 
