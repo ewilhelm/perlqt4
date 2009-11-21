@@ -230,10 +230,7 @@ const char* get_SVt(SV* sv) {
 // For custom signals, the first value will always be xmoc_void, because we
 // don't populate a return type for custom signals.
 QList<MocArgument*> getMocArguments(Smoke* smoke, const char * typeName, QList<QByteArray> methodTypes) {
-    static QRegExp * rx = 0;
-	if (rx == 0) {
-		rx = new QRegExp("^(bool|int|uint|long|ulong|double|char\\*|QString)&?$");
-	}
+    static QRegExp * rx = new QRegExp("^(bool|int|uint|long|ulong|double|char\\*|QString)&?$");
 	methodTypes.prepend(QByteArray(typeName));
 	QList<MocArgument*> result;
 
@@ -1551,10 +1548,7 @@ XS(XS_qt_metacall){
 
             // Find the name of the method being called
             QString name(method.signature());
-            static QRegExp* rx = 0;
-            if (rx == 0) {
-                rx = new QRegExp("\\(.*");
-            }
+            static QRegExp * rx = new QRegExp("\\(.*");
             name.replace(*rx, "");
 
             dbg_p(qtdb_slots,
@@ -1610,10 +1604,7 @@ XS(XS_signal){
     for (index = metaobject->methodCount() - 1; index > -1; --index) {
 		if (metaobject->method(index).methodType() == QMetaMethod::Signal) {
 			QString name(metaobject->method(index).signature());
-            static QRegExp * rx = 0;
-			if (rx == 0) {
-				rx = new QRegExp("\\(.*");
-			}
+            static QRegExp * rx = new QRegExp("\\(.*");
 			name.replace(*rx, "");
 
 			if (name == signalname) {
