@@ -6,8 +6,8 @@ use Qt;
 use MainWindow;
 
 sub main {
-    my $app = Qt::Application( \@ARGV );
-    my $mainWin = MainWindow();
+    my $app = Qt::Application->new( \@ARGV );
+    my $mainWin = MainWindow->new();
     $mainWin->show();
     exit $app->exec();
 }
